@@ -22,49 +22,48 @@ impl BufferReader {
 }
 
 impl Reader for BufferReader {
-    fn read(&mut self, mut num_to_read: usize, buffer: &mut [u8]) -> Status {
+    fn read(&mut self, num_to_read: usize, buffer: &mut [u8]) -> Status {
         assert!(num_to_read > 0);
 
-        let mut num_actually_read = 0;
-        let expected = num_to_read as u64;
+        let expected = num_to_read;
+        let mut num_actually_read = num_to_read;
 
         let num_remaining = self.data.len() - self.pos;
         if num_remaining == 0 {
             return GeneralStatus::EndOfFile.into();
         }
 
-        if num_to_read > num_remaining {
-            num_to_read = num_remaining;
+        if num_actually_read > num_remaining {
+            num_actually_read = num_remaining;
         }
 
-        buffer[..(num_to_read as usize)]
-            .copy_from_slice(&self.data[self.pos..(self.pos + num_to_read)]);
-        num_actually_read = num_to_read as u64;
-        self.pos += num_to_read;
+        buffer[..(num_actually_read as usize)]
+            .copy_from_slice(&self.data[self.pos..(self.pos + num_actually_read)]);
+
+        self.pos += num_actually_read;
 
         if num_actually_read != expected {
-            return GeneralStatus::OkPartial(num_actually_read).into();
+            return GeneralStatus::OkPartial(num_actually_read as u64).into();
         }
         GeneralStatus::OkCompleted.into()
     }
 
-    fn skip(&mut self, mut num_to_skip: u64) -> Status {
+    fn skip(&mut self, num_to_skip: u64) -> Status {
         assert!(num_to_skip > 0);
 
-        let mut num_actually_skipped = 0;
         let expected = num_to_skip;
+        let mut num_actually_skipped = num_to_skip;
 
         let num_remaining = (self.data.len() - self.pos) as u64;
         if num_remaining == 0 {
             return GeneralStatus::EndOfFile.into();
         }
 
-        if num_to_skip > num_remaining {
-            num_to_skip = num_remaining;
+        if num_actually_skipped > num_remaining {
+            num_actually_skipped = num_remaining;
         }
 
-        num_actually_skipped = num_to_skip;
-        self.pos += num_to_skip as usize;
+        self.pos += num_actually_skipped as usize;
 
         if num_actually_skipped != expected {
             return GeneralStatus::OkPartial(num_actually_skipped).into();
