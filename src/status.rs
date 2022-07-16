@@ -48,6 +48,8 @@ pub enum Status {
 }
 
 impl Status {
+    /// Returns true if the status code is either `GeneralStatus::OkCompleted` or `GeneralStatus::OkPartial`.
+    /// Provided for convenience.
     pub fn ok(&self) -> bool {
         matches!(
             self,
@@ -55,10 +57,13 @@ impl Status {
         )
     }
 
+    /// Returns true if the status code is `GeneralStatus::OkCompleted`. Provided for convenience.
     pub fn completed_ok(&self) -> bool {
         matches!(self, Self::General(GeneralStatus::OkCompleted))
     }
 
+    /// Returns true if the status is considered a parsing error. Parsing errors
+    /// represent unrecoverable errors due to malformed data.
     pub fn is_parsing_error(&self) -> bool {
         matches!(self, Self::Error(_))
     }
