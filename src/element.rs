@@ -58,7 +58,7 @@ mod tests {
 
     #[test]
     fn assignment() {
-        let mut e = Element::<i32>::new(42, true);
+        let mut e = Element::new(42, true);
         assert!(e.is_present());
         assert_eq!(*e.mut_value(), 42);
 
