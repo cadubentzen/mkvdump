@@ -1,3 +1,5 @@
+use std::num::NonZeroUsize;
+
 use crate::status::{GeneralStatus, Status};
 use crate::Reader;
 
@@ -22,54 +24,48 @@ impl BufferReader {
 }
 
 impl Reader for BufferReader {
-    fn read(&mut self, num_to_read: usize, buffer: &mut [u8]) -> Status {
-        assert!(num_to_read > 0);
-
+    fn read(&mut self, num_to_read: NonZeroUsize, buffer: &mut [u8]) -> Status {
         let expected = num_to_read;
         let mut num_actually_read = num_to_read;
 
-        let num_remaining = self.data.len() - self.pos;
-        if num_remaining == 0 {
-            return GeneralStatus::EndOfFile.into();
+        if let Some(num_remaining) = NonZeroUsize::new(self.data.len() - self.pos) {
+            if num_actually_read > num_remaining {
+                num_actually_read = num_remaining;
+            }
+
+            buffer[..usize::from(num_actually_read)]
+                .copy_from_slice(&self.data[self.pos..(self.pos + usize::from(num_actually_read))]);
+
+            self.pos += usize::from(num_actually_read);
+
+            if num_actually_read != expected {
+                return GeneralStatus::OkPartial(usize::from(num_actually_read) as u64).into();
+            }
+            GeneralStatus::OkCompleted.into()
+        } else {
+            GeneralStatus::EndOfFile.into()
         }
-
-        if num_actually_read > num_remaining {
-            num_actually_read = num_remaining;
-        }
-
-        buffer[..(num_actually_read as usize)]
-            .copy_from_slice(&self.data[self.pos..(self.pos + num_actually_read)]);
-
-        self.pos += num_actually_read;
-
-        if num_actually_read != expected {
-            return GeneralStatus::OkPartial(num_actually_read as u64).into();
-        }
-        GeneralStatus::OkCompleted.into()
     }
 
-    fn skip(&mut self, num_to_skip: u64) -> Status {
-        assert!(num_to_skip > 0);
-
+    fn skip(&mut self, num_to_skip: NonZeroUsize) -> Status {
         let expected = num_to_skip;
         let mut num_actually_skipped = num_to_skip;
 
-        let num_remaining = (self.data.len() - self.pos) as u64;
-        if num_remaining == 0 {
-            return GeneralStatus::EndOfFile.into();
+        if let Some(num_remaining) = NonZeroUsize::new(self.data.len() - self.pos) {
+            if num_actually_skipped > num_remaining {
+                num_actually_skipped = num_remaining;
+            }
+
+            self.pos += usize::from(num_actually_skipped);
+
+            if num_actually_skipped != expected {
+                return GeneralStatus::OkPartial(usize::from(num_actually_skipped) as u64).into();
+            }
+
+            GeneralStatus::OkCompleted.into()
+        } else {
+            GeneralStatus::EndOfFile.into()
         }
-
-        if num_actually_skipped > num_remaining {
-            num_actually_skipped = num_remaining;
-        }
-
-        self.pos += num_actually_skipped as usize;
-
-        if num_actually_skipped != expected {
-            return GeneralStatus::OkPartial(num_actually_skipped).into();
-        }
-
-        GeneralStatus::OkCompleted.into()
     }
 
     fn position(&self) -> u64 {
@@ -87,17 +83,17 @@ mod tests {
         let mut reader = BufferReader::new(vec![]);
         assert_eq!(reader.size(), 0);
 
-        let mut status = reader.read(buffer.len(), &mut buffer);
+        let mut status = reader.read(buffer.len().try_into().unwrap(), &mut buffer);
         assert_eq!(status, GeneralStatus::EndOfFile);
 
         reader = BufferReader::new(vec![1, 2, 3, 4]);
         assert_eq!(reader.size(), 4);
 
-        status = reader.read(2, &mut buffer);
+        status = reader.read(2.try_into().unwrap(), &mut buffer);
         assert_eq!(status, GeneralStatus::OkCompleted);
 
         reader = BufferReader::new(vec![5, 6, 7, 8]);
-        status = reader.read(2, &mut buffer[2..]);
+        status = reader.read(2.try_into().unwrap(), &mut buffer[2..]);
         assert_eq!(status, GeneralStatus::OkCompleted);
 
         let expected = [1, 2, 5, 6];
@@ -109,10 +105,10 @@ mod tests {
         let mut buffer = [0u8; 1];
         let mut reader = BufferReader::new(vec![]);
 
-        let mut status = reader.read(buffer.len(), &mut buffer);
+        let mut status = reader.read(buffer.len().try_into().unwrap(), &mut buffer);
         assert_eq!(status, GeneralStatus::EndOfFile);
 
-        status = reader.skip(1);
+        status = reader.skip(1.try_into().unwrap());
         assert_eq!(status, GeneralStatus::EndOfFile);
     }
 
@@ -121,16 +117,16 @@ mod tests {
         let mut buffer = [0u8; 15];
         let mut reader = BufferReader::new(Vec::from_iter(0..=9));
 
-        let mut status = reader.read(5, &mut buffer);
+        let mut status = reader.read(5.try_into().unwrap(), &mut buffer);
         assert_eq!(status, GeneralStatus::OkCompleted);
 
-        status = reader.read(10, &mut buffer[5..]);
+        status = reader.read(10.try_into().unwrap(), &mut buffer[5..]);
         assert_eq!(status, GeneralStatus::OkPartial(5));
 
         let expected = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0];
         assert_eq!(buffer, expected);
 
-        status = reader.read(buffer.len(), &mut buffer);
+        status = reader.read(buffer.len().try_into().unwrap(), &mut buffer);
         assert_eq!(status, GeneralStatus::EndOfFile);
     }
 
@@ -138,13 +134,13 @@ mod tests {
     fn skip() {
         let mut reader = BufferReader::new(Vec::from_iter(0..=9));
 
-        let mut status = reader.skip(3);
+        let mut status = reader.skip(3.try_into().unwrap());
         assert_eq!(status, GeneralStatus::OkCompleted);
 
-        status = reader.skip(10);
+        status = reader.skip(10.try_into().unwrap());
         assert_eq!(status, GeneralStatus::OkPartial(7));
 
-        status = reader.skip(1);
+        status = reader.skip(1.try_into().unwrap());
         assert_eq!(status, GeneralStatus::EndOfFile);
     }
 
@@ -153,13 +149,13 @@ mod tests {
         let mut buffer = [0u8; 10];
         let mut reader = BufferReader::new(Vec::from_iter((0..=9).rev()));
 
-        let mut status = reader.read(5, &mut buffer);
+        let mut status = reader.read(5.try_into().unwrap(), &mut buffer);
         assert_eq!(status, GeneralStatus::OkCompleted);
 
-        status = reader.skip(3);
+        status = reader.skip(3.try_into().unwrap());
         assert_eq!(status, GeneralStatus::OkCompleted);
 
-        status = reader.read(5, &mut buffer[5..]);
+        status = reader.read(5.try_into().unwrap(), &mut buffer[5..]);
         assert_eq!(status, GeneralStatus::OkPartial(2));
 
         let expected = [9, 8, 7, 6, 5, 1, 0, 0, 0, 0];
@@ -171,15 +167,15 @@ mod tests {
         let mut buffer = [0u8; 10];
         let mut reader = BufferReader::new(Vec::from_iter((0..=9).rev()));
 
-        let mut status = reader.read(5, &mut buffer);
+        let mut status = reader.read(5.try_into().unwrap(), &mut buffer);
         assert_eq!(status, GeneralStatus::OkCompleted);
         assert_eq!(reader.position(), 5);
 
-        status = reader.skip(3);
+        status = reader.skip(3.try_into().unwrap());
         assert_eq!(status, GeneralStatus::OkCompleted);
         assert_eq!(reader.position(), 8);
 
-        status = reader.read(5, &mut buffer[5..]);
+        status = reader.read(5.try_into().unwrap(), &mut buffer[5..]);
         assert_eq!(status, GeneralStatus::OkPartial(2));
         assert_eq!(reader.position(), 10);
 
