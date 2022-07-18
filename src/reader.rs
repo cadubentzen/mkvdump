@@ -1,4 +1,4 @@
-use crate::status::Status;
+use crate::Status;
 
 pub trait Reader {
     fn read(&mut self, num_to_read: usize, buffer: &mut [u8]) -> Status;

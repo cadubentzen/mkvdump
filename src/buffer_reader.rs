@@ -1,5 +1,5 @@
-use crate::reader::Reader;
 use crate::status::{GeneralStatus, Status};
+use crate::Reader;
 
 /// A simple reader that reads data from a buffer of bytes.
 pub struct BufferReader {
