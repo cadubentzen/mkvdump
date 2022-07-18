@@ -33,13 +33,13 @@ impl Reader for BufferReader {
                 num_actually_read = num_remaining;
             }
 
-            buffer[..usize::from(num_actually_read)]
-                .copy_from_slice(&self.data[self.pos..(self.pos + usize::from(num_actually_read))]);
+            buffer[..num_actually_read.get()]
+                .copy_from_slice(&self.data[self.pos..(self.pos + num_actually_read.get())]);
 
-            self.pos += usize::from(num_actually_read);
+            self.pos += num_actually_read.get();
 
             if num_actually_read != expected {
-                return GeneralStatus::OkPartial(usize::from(num_actually_read) as u64).into();
+                return GeneralStatus::OkPartial(num_actually_read.get() as u64).into();
             }
             GeneralStatus::OkCompleted.into()
         } else {
@@ -56,10 +56,10 @@ impl Reader for BufferReader {
                 num_actually_skipped = num_remaining;
             }
 
-            self.pos += usize::from(num_actually_skipped);
+            self.pos += num_actually_skipped.get();
 
             if num_actually_skipped != expected {
-                return GeneralStatus::OkPartial(usize::from(num_actually_skipped) as u64).into();
+                return GeneralStatus::OkPartial(num_actually_skipped.get() as u64).into();
             }
 
             GeneralStatus::OkCompleted.into()
