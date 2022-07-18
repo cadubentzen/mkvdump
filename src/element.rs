@@ -14,18 +14,28 @@ pub struct Element<T> {
 }
 
 impl<T> Element<T> {
+    /// Creates an element with the given value and presence state.
     pub const fn new(value: T, is_present: bool) -> Self {
         Self { value, is_present }
     }
 
+    /// Sets the element's value and state.
+    pub fn set(&mut self, value: T, is_present: bool) {
+        self.value = value;
+        self.is_present = is_present;
+    }
+
+    /// Gets the element's value.
     pub const fn value(&self) -> &T {
         &self.value
     }
 
+    /// Gets a mutable borrow to the element's value.
     pub fn mut_value(&mut self) -> &mut T {
         &mut self.value
     }
 
+    /// Returns true if the element is present, false otherwise.
     pub const fn is_present(&self) -> bool {
         self.is_present
     }
@@ -65,5 +75,9 @@ mod tests {
         *e.mut_value() = 0;
         assert!(e.is_present());
         assert_eq!(*e.value(), 0);
+
+        e.set(24, false);
+        assert!(!e.is_present());
+        assert_eq!(*e.value(), 24);
     }
 }
