@@ -14,11 +14,11 @@ pub struct Element<T> {
 }
 
 impl<T> Element<T> {
-    pub fn new(value: T, is_present: bool) -> Self {
+    pub const fn new(value: T, is_present: bool) -> Self {
         Self { value, is_present }
     }
 
-    pub fn value(&self) -> &T {
+    pub const fn value(&self) -> &T {
         &self.value
     }
 
@@ -26,7 +26,7 @@ impl<T> Element<T> {
         &mut self.value
     }
 
-    pub fn is_present(&self) -> bool {
+    pub const fn is_present(&self) -> bool {
         self.is_present
     }
 }
