@@ -1,4 +1,4 @@
-use crate::{Element, ElementMetadata};
+use crate::ElementMetadata;
 
 /// Data structures representing parsed DOM objects.
 ///
@@ -52,8 +52,30 @@ pub struct FrameMetadata {
 // #[derive(Debug, PartialEq)]
 // pub struct Cluster {}
 
-// #[derive(Debug, PartialEq)]
-// pub struct Ebml {}
+#[derive(Debug, PartialEq)]
+pub struct Ebml {
+    pub ebml_version: Option<u64>,
+    pub ebml_read_version: Option<u64>,
+    pub ebml_max_id_length: Option<u64>,
+    pub ebml_max_size_length: Option<u64>,
+    pub doc_type: Option<String>,
+    pub doc_type_version: Option<u64>,
+    pub doc_type_read_version: Option<u64>,
+}
+
+impl Default for Ebml {
+    fn default() -> Self {
+        Self {
+            ebml_version: Some(1),
+            ebml_read_version: Some(1),
+            ebml_max_id_length: Some(2),
+            ebml_max_size_length: Some(8),
+            doc_type: Some("matroska".to_string()),
+            doc_type_version: Some(1),
+            doc_type_read_version: Some(1),
+        }
+    }
+}
 
 // #[derive(Debug, PartialEq)]
 // pub struct Info {}
