@@ -9,7 +9,7 @@
 // http://www.webmproject.org/docs/webm-encryption/#42-new-matroskawebm-elements
 // http://matroska.org/technical/specs/index.html
 #[repr(u32)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Id {
     // The MatroskaID alias links to the WebM and Matroska specifications.
     // The WebMID alias links to the WebM specification.
