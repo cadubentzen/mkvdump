@@ -1,5 +1,5 @@
 use crate::{Callback, Status};
 
-trait Parser {
+pub trait Parser {
     fn feed(&mut self, callback: &mut dyn Callback) -> Status;
 }

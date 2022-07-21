@@ -1,9 +1,11 @@
+pub(crate) mod ancestory;
 pub mod buffer_reader;
 pub mod callback;
 pub mod dom_types;
 pub mod element_metadata;
+pub(crate) mod element_parser;
 pub mod id;
-mod parser;
+pub(crate) mod parser;
 pub mod reader;
 pub mod status;
 
