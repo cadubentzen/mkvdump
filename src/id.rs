@@ -47,16 +47,16 @@ pub enum Id {
     Segment = 0x18538067,
     /// \MatroskaID{SeekHead} element ID.
     /// \WebMTable{Master, 1, No, Yes, No, , }
-    SeeHead = 0x114D9B74,
+    SeekHead = 0x114D9B74,
     /// \MatroskaID{Seek} element ID.
     /// \WebMTable{Master, 2, Yes, Yes, No, , }
-    See = 0x4DBB,
+    Seek = 0x4DBB,
     /// \MatroskaID{SeekID} element ID.
     /// \WebMTable{Binary, 3, Yes, No, No, , }
-    SeeId = 0x53AB,
+    SeekId = 0x53AB,
     /// \MatroskaID{SeekPosition} element ID.
     /// \WebMTable{Unsigned integer, 3, Yes, No, No, , 0}
-    SeePosition = 0x53AC,
+    SeekPosition = 0x53AC,
     /// \MatroskaID{Info} element ID.
     /// \WebMTable{Master, 1, Yes, Yes, No, , }
     Info = 0x1549A966,
@@ -89,34 +89,34 @@ pub enum Id {
     PrevSize = 0xAB,
     /// \MatroskaID{SimpleBlock} element ID.
     /// \WebMTable{Binary, 2, No, Yes, No, , }
-    SimpleBloc = 0xA3,
+    SimpleBlock = 0xA3,
     /// \MatroskaID{BlockGroup} element ID.
     /// \WebMTable{Master, 2, No, Yes, No, , }
-    BlocGroup = 0xA0,
+    BlockGroup = 0xA0,
     /// \MatroskaID{Block} element ID.
     /// \WebMTable{Binary, 3, Yes, No, No, , }
-    Bloc = 0xA1,
+    Block = 0xA1,
     /// \MatroskaID{BlockVirtual} (deprecated) element ID.
     /// \WebMTable{Binary, 3, No, No, No, , }
-    BlocVirtual = 0xA2,
+    BlockVirtual = 0xA2,
     /// \MatroskaID{BlockAdditions} element ID.
     /// \WebMTable{Master, 3, No, No, No, , }
-    BlocAdditions = 0x75A1,
+    BlockAdditions = 0x75A1,
     /// \MatroskaID{BlockMore} element ID.
     /// \WebMTable{Master, 4, Yes, Yes, No, , }
-    BlocMore = 0xA6,
+    BlockMore = 0xA6,
     /// \MatroskaID{BlockAddID} element ID.
     /// \WebMTable{Unsigned integer, 5, Yes, No, No, Not 0, 1}
-    BlocAddId = 0xEE,
+    BlockAddId = 0xEE,
     /// \MatroskaID{BlockAdditional} element ID.
     /// \WebMTable{Binary, 5, Yes, No, No, , }
-    BlocAdditional = 0xA5,
+    BlockAdditional = 0xA5,
     /// \MatroskaID{BlockDuration} element ID.
     /// \WebMTable{Unsigned integer, 3, No, No, No, , DefaultDuration}
-    BlocDuration = 0x9B,
+    BlockDuration = 0x9B,
     /// \MatroskaID{ReferenceBlock} element ID.
     /// \WebMTable{Signed integer, 3, No, Yes, No, , 0}
-    ReferenceBloc = 0xFB,
+    ReferenceBlock = 0xFB,
     /// \MatroskaID{DiscardPadding} element ID.
     /// \WebMTable{Signed integer, 3, No, No, No, , 0}
     DiscardPadding = 0x75A2,
@@ -131,19 +131,19 @@ pub enum Id {
     LaceNumber = 0xCC,
     /// \MatroskaID{Tracks} element ID.
     /// \WebMTable{Master, 1, No, Yes, No, , }
-    Tracs = 0x1654AE6B,
+    Tracks = 0x1654AE6B,
     /// \MatroskaID{TrackEntry} element ID.
     /// \WebMTable{Master, 2, Yes, Yes, No, , }
-    TracEntry = 0xAE,
+    TrackEntry = 0xAE,
     /// \MatroskaID{TrackNumber} element ID.
     /// \WebMTable{Unsigned integer, 3, Yes, No, No, Not 0, 0}
-    TracNumber = 0xD7,
+    TrackNumber = 0xD7,
     /// \MatroskaID{TrackUID} element ID.
     /// \WebMTable{Unsigned integer, 3, Yes, No, No, Not 0, 0}
-    TracUid = 0x73C5,
+    TrackUid = 0x73C5,
     /// \MatroskaID{TrackType} element ID.
     /// \WebMTable{Unsigned integer, 3, Yes, No, No, 1-254, 0}
-    TracType = 0x83,
+    TrackType = 0x83,
     /// \MatroskaID{FlagEnabled} element ID.
     /// \WebMTable{Unsigned integer, 3, Yes, No, No, 0-1, 1}
     FlagEnabled = 0xB9,
