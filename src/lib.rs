@@ -3,6 +3,7 @@ pub mod callback;
 pub mod dom_types;
 pub mod element_metadata;
 pub mod id;
+mod parser;
 pub mod reader;
 pub mod status;
 
