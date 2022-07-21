@@ -1,5 +1,5 @@
 pub mod buffer_reader;
-pub mod element;
+pub mod element_metadata;
 pub mod id;
 pub mod reader;
 pub mod status;
