@@ -113,3 +113,5 @@ impl PartialEq<InternalStatus> for Status {
         }
     }
 }
+
+type WebmParserResult<T> = Result<T, ErrorStatus>;

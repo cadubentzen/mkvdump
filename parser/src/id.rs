@@ -1,3 +1,14 @@
+use enum_primitive_derive::Primitive;
+use nom::{
+    bytes::streaming::take,
+    combinator::peek,
+    error::{Error, ErrorKind},
+    Err, IResult,
+};
+use num_traits::FromPrimitive;
+
+use crate::parser_utils::count_leading_zero_bits;
+
 /// An EBML ID for a WebM element.
 ///
 /// The enum names correspond to the element names from the Matroska and WebM
@@ -9,7 +20,7 @@
 // http://www.webmproject.org/docs/webm-encryption/#42-new-matroskawebm-elements
 // http://matroska.org/technical/specs/index.html
 #[repr(u32)]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Primitive, Copy)]
 pub enum Id {
     // The MatroskaID alias links to the WebM and Matroska specifications.
     // The WebMID alias links to the WebM specification.
@@ -459,4 +470,64 @@ pub enum Id {
     /// \MatroskaID{TagBinary} element ID.
     /// \WebMTable{Binary, 4, No, No, No, , }
     TagBinary = 0x4485,
+}
+
+pub fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
+    let (input, first_byte) = peek(take(1usize))(input)?;
+    let first_byte = first_byte[0];
+
+    let num_bytes = count_leading_zero_bits(first_byte) + 1;
+
+    // IDs can only have up to 4 bytes
+    if num_bytes > 4 {
+        return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
+    }
+
+    let (input, varint_bytes) = take(num_bytes)(input)?;
+    // any efficient way to avoid this copy here?
+    let mut value_buffer = [0u8; 4];
+    value_buffer[(4 - varint_bytes.len())..].copy_from_slice(varint_bytes);
+    let id = u32::from_be_bytes(value_buffer);
+
+    if let Some(id) = Id::from_u32(id) {
+        Ok((input, id))
+    } else {
+        Err(Err::Failure(Error::new(input, ErrorKind::Alt)))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use nom::Needed;
+
+    use super::*;
+
+    #[test]
+    fn test_count_leading_zero_bits() {
+        assert_eq!(count_leading_zero_bits(0b10000000), 0);
+        assert_eq!(count_leading_zero_bits(0b01000000), 1);
+        assert_eq!(count_leading_zero_bits(0b00000001), 7);
+        assert_eq!(count_leading_zero_bits(0b00000000), 8);
+    }
+
+    #[test]
+    fn test_parse_id() {
+        const EMPTY: &[u8] = &[];
+        assert_eq!(parse_id(&[0x1A, 0x45, 0xDF, 0xA3]), Ok((EMPTY, Id::Ebml)));
+        assert_eq!(parse_id(&[0x42, 0x86]), Ok((EMPTY, Id::EbmlVersion)));
+        assert_eq!(parse_id(&[0x23, 0x83, 0xE3]), Ok((EMPTY, Id::FrameRate)));
+
+        // 1 byte missing from FrameRate (3-bytes long)
+        assert_eq!(
+            parse_id(&[0x23, 0x83]),
+            Err(Err::Incomplete(Needed::Size(1.try_into().unwrap())))
+        );
+
+        // Longer than 4 bytes
+        const FAILURE_INPUT: &[u8] = &[0x08, 0x45, 0xDF, 0xA3];
+        assert_eq!(
+            parse_id(FAILURE_INPUT),
+            Err(Err::Failure(Error::new(FAILURE_INPUT, ErrorKind::Fail)))
+        );
+    }
 }
