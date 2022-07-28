@@ -41,7 +41,13 @@ fn main() -> io::Result<()> {
                 );
                 todo!("Partial reads not implemented")
             }
-            _ => panic!("Something is wrong"),
+            _ => {
+                println!(
+                    "Something is wrong. \nPartial result:\n{}",
+                    serde_yaml::to_string(&elements).unwrap()
+                );
+                todo!()
+            }
         }
     }
 
