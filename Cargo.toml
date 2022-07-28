@@ -1,6 +1,5 @@
 [workspace]
 
 members = [
-    "macros",
-    "parser"
+    "parser",
 ]

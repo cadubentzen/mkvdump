@@ -1,0 +1,46 @@
+use std::fs::File;
+use std::io::{self, Read};
+
+use clap::Parser;
+
+use webm_parser::{parse_element, Element};
+
+/// WebM dump
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    /// Name of the file to be dumped
+    filename: String,
+}
+
+fn main() -> io::Result<()> {
+    let args = Args::parse();
+    let mut file = File::open(args.filename)?;
+
+    let mut buffer = vec![0u8; 204800];
+    let num_read = file.read(&mut buffer)?;
+
+    let mut elements = Vec::<Element>::new();
+    let mut bytes_parsed = 0;
+
+    let mut read_buffer = &buffer[..num_read];
+    loop {
+        match parse_element(read_buffer) {
+            Ok((new_read_buffer, element)) => {
+                elements.push(element);
+                if new_read_buffer.is_empty() {
+                    break;
+                }
+                read_buffer = new_read_buffer;
+            }
+            Err(nom::Err::Incomplete(_)) => {
+                todo!()
+            }
+            _ => panic!("Something is wrong"),
+        }
+    }
+
+    println!("{}", serde_yaml::to_string(&elements).unwrap());
+
+    Ok(())
+}
