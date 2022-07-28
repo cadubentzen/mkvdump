@@ -17,13 +17,13 @@ fn main() -> io::Result<()> {
     let args = Args::parse();
     let mut file = File::open(args.filename)?;
 
-    let mut buffer = vec![0u8; 204800];
-    let num_read = file.read(&mut buffer)?;
+    // TODO: read chunked to not load entire video in memory.
+    let mut buffer = Vec::<u8>::new();
+    file.read_to_end(&mut buffer)?;
 
     let mut elements = Vec::<Element>::new();
-    let mut bytes_parsed = 0;
 
-    let mut read_buffer = &buffer[..num_read];
+    let mut read_buffer = &buffer[..];
     loop {
         match parse_element(read_buffer) {
             Ok((new_read_buffer, element)) => {
@@ -33,8 +33,13 @@ fn main() -> io::Result<()> {
                 }
                 read_buffer = new_read_buffer;
             }
-            Err(nom::Err::Incomplete(_)) => {
-                todo!()
+            Err(nom::Err::Incomplete(needed)) => {
+                println!(
+                    "Needed: {:?}\nPartial result:\n{}",
+                    needed,
+                    serde_yaml::to_string(&elements).unwrap()
+                );
+                todo!("Partial reads not implemented")
             }
             _ => panic!("Something is wrong"),
         }

@@ -9,7 +9,7 @@ use nom::{
     Err, IResult, Needed,
 };
 use num_traits::FromPrimitive;
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq)]
 enum Type {
@@ -425,7 +425,15 @@ fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
+pub enum BinaryValue {
+    SeekId(Id),
+    Hidden,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum Body {
+    Empty,
     Unsigned(u64),
     Signed(i64),
     Float(f64),
@@ -433,19 +441,7 @@ pub enum Body {
     Utf8(String),
     Date(i64),
     Master(Vec<Element>),
-    #[serde(serialize_with = "shorten_serialize")]
-    Binary(Vec<u8>),
-}
-
-fn shorten_serialize<S>(buffer: &Vec<u8>, s: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    if buffer.len() > 4 {
-        s.serialize_str(&format!("{} bytes", buffer.len()))
-    } else {
-        s.serialize_bytes(buffer)
-    }
+    Binary(BinaryValue),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -456,41 +452,49 @@ pub struct Element {
 }
 
 pub fn parse_element(input: &[u8]) -> IResult<&[u8], Element> {
-    let (input, metadata) = parse_header(input)?;
-    let element_type = if let Some(element_type) = ID_ELEMENT_TYPE_MAP.get(&metadata.id) {
+    let (input, header) = parse_header(input)?;
+    let element_type = if let Some(element_type) = ID_ELEMENT_TYPE_MAP.get(&header.id) {
         element_type.to_owned()
     } else {
-        eprintln!("No element type found for ID: {:?}", metadata.id);
+        eprintln!("No element type found for ID: {:?}", header.id);
         &Type::Binary
     };
 
+    if header.body_size == 0 {
+        return Ok((
+            input,
+            Element {
+                header,
+                body: Body::Empty,
+            },
+        ));
+    }
+
     let (input, body) = match element_type {
         Type::Unsigned => {
-            parse_int(&metadata, input).map(|(input, value)| (input, Body::Unsigned(value)))
+            parse_int(&header, input).map(|(input, value)| (input, Body::Unsigned(value)))
         }
         Type::Signed => {
-            parse_int(&metadata, input).map(|(input, value)| (input, Body::Signed(value)))
+            parse_int(&header, input).map(|(input, value)| (input, Body::Signed(value)))
         }
         Type::Float => {
-            parse_float(&metadata, input).map(|(input, value)| (input, Body::Float(value)))
+            parse_float(&header, input).map(|(input, value)| (input, Body::Float(value)))
         }
         Type::String => {
-            parse_string(&metadata, input).map(|(input, value)| (input, Body::String(value)))
+            parse_string(&header, input).map(|(input, value)| (input, Body::String(value)))
         }
-        Type::Utf8 => {
-            parse_string(&metadata, input).map(|(input, value)| (input, Body::Utf8(value)))
-        }
+        Type::Utf8 => parse_string(&header, input).map(|(input, value)| (input, Body::Utf8(value))),
         Type::Date => todo!(),
         Type::Master => {
-            if input.len() < metadata.body_size as usize {
+            if input.len() < header.body_size as usize {
                 return Err(Err::Incomplete(Needed::Size(
-                    (metadata.body_size as usize - input.len())
+                    (header.body_size as usize - input.len())
                         .try_into()
                         .unwrap(),
                 )));
             }
             let mut elements = Vec::<Element>::new();
-            let mut sub_input = &input[..metadata.body_size as usize];
+            let mut sub_input = &input[..header.body_size as usize];
             loop {
                 let (new_sub_input, sub_element) = parse_element(sub_input)?;
                 elements.push(sub_element);
@@ -500,21 +504,26 @@ pub fn parse_element(input: &[u8]) -> IResult<&[u8], Element> {
                 sub_input = new_sub_input;
             }
             Ok((
-                &input[(metadata.body_size as usize)..],
+                &input[(header.body_size as usize)..],
                 Body::Master(elements),
             ))
         }
-        Type::Binary => {
-            parse_binary(&metadata, input).map(|(input, value)| (input, Body::Binary(value)))
-        }
+        Type::Binary => parse_binary(&header, input).map(|(input, value)| {
+            let binary_value = match header.id {
+                Id::SeekId => parse_id(&value).map_or_else(
+                    |_| {
+                        eprintln!("Failed parsing SeekId. Returning hidden binary");
+                        BinaryValue::Hidden
+                    },
+                    |(_, id)| BinaryValue::SeekId(id),
+                ),
+                _ => BinaryValue::Hidden,
+            };
+            (input, Body::Binary(binary_value))
+        }),
     }?;
-    Ok((
-        input,
-        Element {
-            header: metadata,
-            body,
-        },
-    ))
+    let element = Element { header, body };
+    Ok((input, element))
 }
 
 fn parse_string<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], String> {
@@ -714,5 +723,33 @@ mod tests {
         );
 
         println!("{}", serde_yaml::to_string(&(result.unwrap().1)).unwrap());
+    }
+
+    #[test]
+    fn test_parse_seek_id() {
+        assert_eq!(
+            parse_element(&[0x53, 0xAB, 0x84, 0x15, 0x49, 0xA9, 0x66]),
+            Ok((
+                EMPTY,
+                Element {
+                    header: Header::new(Id::SeekId, 3, 4),
+                    body: Body::Binary(BinaryValue::SeekId(Id::Info))
+                }
+            ))
+        );
+    }
+
+    #[test]
+    fn test_parse_empty() {
+        assert_eq!(
+            parse_element(&[0x63, 0xC0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
+            Ok((
+                EMPTY,
+                Element {
+                    header: Header::new(Id::Targets, 10, 0),
+                    body: Body::Empty
+                }
+            ))
+        );
     }
 }
