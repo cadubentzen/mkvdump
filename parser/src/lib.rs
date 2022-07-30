@@ -6,7 +6,7 @@ use nom::{
     bytes::streaming::take,
     combinator::peek,
     error::{Error, ErrorKind},
-    Err, IResult, Needed,
+    Err, IResult,
 };
 use num_traits::FromPrimitive;
 use serde::{Deserialize, Serialize};
@@ -437,14 +437,13 @@ pub enum BinaryValue {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Body {
-    Empty,
+    Master,
     Unsigned(u64),
     Signed(i64),
     Float(f64),
     String(String),
     Utf8(String),
     Date(i64),
-    Master(Vec<Element>),
     Binary(BinaryValue),
 }
 
@@ -463,6 +462,7 @@ pub fn parse_element(input: &[u8]) -> IResult<&[u8], Element> {
         .expect("All IDs should have an entry in the lookup map");
 
     let (input, body) = match element_type {
+        Type::Master => Ok((input, Body::Master)),
         Type::Unsigned => {
             parse_int(&header, input).map(|(input, value)| (input, Body::Unsigned(value)))
         }
@@ -477,29 +477,6 @@ pub fn parse_element(input: &[u8]) -> IResult<&[u8], Element> {
         }
         Type::Utf8 => parse_string(&header, input).map(|(input, value)| (input, Body::Utf8(value))),
         Type::Date => todo!(),
-        Type::Master => {
-            if input.len() < header.body_size as usize {
-                return Err(Err::Incomplete(Needed::Size(
-                    (header.body_size as usize - input.len())
-                        .try_into()
-                        .unwrap(),
-                )));
-            }
-            let mut elements = Vec::<Element>::new();
-            let mut sub_input = &input[..header.body_size as usize];
-            loop {
-                let (new_sub_input, sub_element) = parse_element(sub_input)?;
-                elements.push(sub_element);
-                if new_sub_input.is_empty() {
-                    break;
-                }
-                sub_input = new_sub_input;
-            }
-            Ok((
-                &input[(header.body_size as usize)..],
-                Body::Master(elements),
-            ))
-        }
         Type::Binary => parse_binary(&header, input).map(|(input, value)| {
             let binary_value = match header.id {
                 Id::SeekId => parse_id(&value).map_or_else(
@@ -578,6 +555,8 @@ fn parse_float<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], f64>
 
 #[cfg(test)]
 mod tests {
+    use nom::Needed;
+
     use super::*;
 
     const EMPTY: &[u8] = &[];
@@ -665,7 +644,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_element() {
+    fn test_parse_master_element() {
         const INPUT: &[u8] = &[
             0x1A, 0x45, 0xDF, 0xA3, 0x9F, 0x42, 0x86, 0x81, 0x01, 0x42, 0xF7, 0x81, 0x01, 0x42,
             0xF2, 0x81, 0x04, 0x42, 0xF3, 0x81, 0x08, 0x42, 0x82, 0x84, 0x77, 0x65, 0x62, 0x6D,
@@ -673,43 +652,13 @@ mod tests {
         ];
 
         let result = parse_element(INPUT);
-
         assert_eq!(
             result,
             Ok((
-                EMPTY,
+                &INPUT[5..],
                 Element {
                     header: Header::new(Id::Ebml, 5, 31),
-                    body: Body::Master(vec![
-                        Element {
-                            header: Header::new(Id::EbmlVersion, 3, 1),
-                            body: Body::Unsigned(1),
-                        },
-                        Element {
-                            header: Header::new(Id::EbmlReadVersion, 3, 1),
-                            body: Body::Unsigned(1),
-                        },
-                        Element {
-                            header: Header::new(Id::EbmlMaxIdLength, 3, 1),
-                            body: Body::Unsigned(4),
-                        },
-                        Element {
-                            header: Header::new(Id::EbmlMaxSizeLength, 3, 1),
-                            body: Body::Unsigned(8),
-                        },
-                        Element {
-                            header: Header::new(Id::DocType, 3, 4),
-                            body: Body::String("webm".to_string()),
-                        },
-                        Element {
-                            header: Header::new(Id::DocTypeVersion, 3, 1),
-                            body: Body::Unsigned(4),
-                        },
-                        Element {
-                            header: Header::new(Id::DocTypeReadVersion, 3, 1),
-                            body: Body::Unsigned(2),
-                        }
-                    ])
+                    body: Body::Master
                 }
             ))
         );
@@ -753,7 +702,7 @@ mod tests {
                 EMPTY,
                 Element {
                     header: Header::new(Id::Targets, 10, 0),
-                    body: Body::Empty
+                    body: Body::Master
                 }
             ))
         );
