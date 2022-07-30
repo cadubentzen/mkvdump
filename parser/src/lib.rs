@@ -360,7 +360,6 @@ fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Header {
     pub id: Id,
-    #[serde(skip_serializing)]
     pub header_size: usize,
     #[serde(skip_serializing)]
     pub body_size: u64,
@@ -448,6 +447,7 @@ pub enum Body {
 pub struct Element {
     #[serde(flatten)]
     pub header: Header,
+    #[serde(rename = "value")]
     pub body: Body,
 }
 
