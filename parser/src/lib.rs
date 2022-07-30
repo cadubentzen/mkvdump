@@ -26,6 +26,7 @@ enum Type {
 #[repr(u32)]
 #[derive(Debug, Clone, PartialEq, Primitive, Copy, Eq, Hash, Serialize, Deserialize)]
 pub enum Id {
+    Unknown = 0x00,
     Ebml = 0x1A45DFA3,
     EbmlVersion = 0x4286,
     EbmlReadVersion = 0x42F7,
@@ -182,6 +183,7 @@ pub enum Id {
 // TODO: use proc-macros to avoid this lazy_static
 lazy_static! {
     static ref ID_ELEMENT_TYPE_MAP: HashMap<Id, Type> = HashMap::from([
+        (Id::Unknown, Type::Binary),
         (Id::Ebml, Type::Master),
         (Id::EbmlVersion, Type::Unsigned),
         (Id::EbmlReadVersion, Type::Unsigned),
@@ -350,11 +352,14 @@ fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
     value_buffer[(4 - varint_bytes.len())..].copy_from_slice(varint_bytes);
     let id = u32::from_be_bytes(value_buffer);
 
-    if let Some(id) = Id::from_u32(id) {
-        Ok((input, id))
-    } else {
-        Err(Err::Failure(Error::new(input, ErrorKind::Alt)))
-    }
+    Ok((
+        input,
+        Id::from_u32(id).unwrap_or_else(|| {
+            eprintln!("Failed to parse ID 0x{:X}. Is it supported by WebM?", id);
+            eprintln!("Check here: https://www.webmproject.org/docs/container/");
+            Id::Unknown
+        }),
+    ))
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -453,22 +458,9 @@ pub struct Element {
 
 pub fn parse_element(input: &[u8]) -> IResult<&[u8], Element> {
     let (input, header) = parse_header(input)?;
-    let element_type = if let Some(element_type) = ID_ELEMENT_TYPE_MAP.get(&header.id) {
-        element_type.to_owned()
-    } else {
-        eprintln!("No element type found for ID: {:?}", header.id);
-        &Type::Binary
-    };
-
-    if header.body_size == 0 {
-        return Ok((
-            input,
-            Element {
-                header,
-                body: Body::Empty,
-            },
-        ));
-    }
+    let element_type = ID_ELEMENT_TYPE_MAP
+        .get(&header.id)
+        .expect("All IDs should have an entry in the lookup map");
 
     let (input, body) = match element_type {
         Type::Unsigned => {
@@ -734,6 +726,20 @@ mod tests {
                 Element {
                     header: Header::new(Id::SeekId, 3, 4),
                     body: Body::Binary(BinaryValue::SeekId(Id::Info))
+                }
+            ))
+        );
+    }
+
+    #[test]
+    fn test_parse_unknown() {
+        assert_eq!(
+            parse_element(&[0xBF, 0x84, 0xAF, 0x93, 0x97, 0x18]),
+            Ok((
+                EMPTY,
+                Element {
+                    header: Header::new(Id::Unknown, 2, 4),
+                    body: Body::Binary(BinaryValue::Hidden)
                 }
             ))
         );
