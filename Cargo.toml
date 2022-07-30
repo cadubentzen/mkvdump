@@ -1,5 +1,5 @@
 [package]
-name = "webm-parser"
+name = "webmdump"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,11 +9,9 @@ edition = "2021"
 nom = "7"
 enum-primitive-derive = "0.2"
 num-traits = "0.2"
-# macros = { path = "../macros"}
 lazy_static = "1.4.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.8"
-
-[dev-dependencies]
 clap = { version = "3", features = ["derive"] }
+
