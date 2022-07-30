@@ -11,6 +11,10 @@ use webm_parser::{parse_element, Element};
 struct Args {
     /// Name of the file to be dumped
     filename: String,
+
+    /// Output in JSON format, rather than the default YAML
+    #[clap(short, long, action = clap::ArgAction::SetTrue)]
+    json: bool,
 }
 
 fn main() -> io::Result<()> {
@@ -51,7 +55,11 @@ fn main() -> io::Result<()> {
         }
     }
 
-    println!("{}", serde_yaml::to_string(&elements).unwrap());
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&elements).unwrap());
+    } else {
+        println!("{}", serde_yaml::to_string(&elements).unwrap());
+    }
 
     Ok(())
 }
