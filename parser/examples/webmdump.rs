@@ -3,7 +3,7 @@ use std::io::{self, Read};
 
 use clap::Parser;
 
-use webm_parser::{parse_element, Element};
+use webm_parser::{parse_element, print_element_trees, Element};
 
 /// WebM dump
 #[derive(Parser, Debug)]
@@ -13,8 +13,8 @@ struct Args {
     filename: String,
 
     /// Output in JSON format, rather than the default YAML
-    #[clap(short, long, action = clap::ArgAction::SetTrue)]
-    json: bool,
+    #[clap(short, long, default_value = "yaml")]
+    format: String,
 }
 
 fn main() -> io::Result<()> {
@@ -51,11 +51,7 @@ fn main() -> io::Result<()> {
         }
     }
 
-    if args.json {
-        println!("{}", serde_json::to_string_pretty(&elements).unwrap());
-    } else {
-        println!("{}", serde_yaml::to_string(&elements).unwrap());
-    }
+    print_element_trees(&elements, &args.format);
 
     Ok(())
 }

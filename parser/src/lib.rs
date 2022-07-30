@@ -553,6 +553,68 @@ fn parse_float<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], f64>
     }
 }
 
+#[derive(Debug, PartialEq, Serialize)]
+struct MasterElement {
+    #[serde(flatten)]
+    header: Header,
+    children: Vec<ElementTree>,
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+#[serde(untagged)]
+enum ElementTree {
+    Normal(Element),
+    Master(MasterElement),
+}
+
+fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
+    let mut trees = Vec::<ElementTree>::new();
+
+    let mut index = 0;
+    while index < elements.len() {
+        let element = &elements[index];
+        match element.body {
+            Body::Master => {
+                let mut size_remaining = element.header.body_size;
+                // TODO: no need to copy here
+                let mut children = Vec::<Element>::new();
+                while size_remaining > 0 {
+                    index += 1;
+                    let next_child = &elements[index];
+                    size_remaining -= if let Body::Master = next_child.body {
+                        // Master elements' body size should not count in the recursion
+                        // as the children would duplicate the size count, so
+                        // we only consider the header size on the calculation.
+                        next_child.header.header_size as u64
+                    } else {
+                        next_child.header.size
+                    };
+                    children.push(next_child.clone());
+                }
+                trees.push(ElementTree::Master(MasterElement {
+                    header: element.header.clone(),
+                    children: build_element_trees(&children),
+                }));
+            }
+            _ => {
+                trees.push(ElementTree::Normal(element.clone()));
+            }
+        }
+        index += 1;
+    }
+    trees
+}
+
+pub fn print_element_trees(elements: &[Element], format: &str) {
+    let element_trees = build_element_trees(elements);
+    let serialized = if format == "json" {
+        serde_json::to_string_pretty(&element_trees).unwrap()
+    } else {
+        serde_yaml::to_string(&element_trees).unwrap()
+    };
+    println!("{}", serialized);
+}
+
 #[cfg(test)]
 mod tests {
     use nom::Needed;
@@ -706,5 +768,79 @@ mod tests {
                 }
             ))
         );
+    }
+
+    #[test]
+    fn test_build_element_trees() {
+        let elements = [
+            Element {
+                header: Header::new(Id::Ebml, 5, 31),
+                body: Body::Master,
+            },
+            Element {
+                header: Header::new(Id::EbmlVersion, 3, 1),
+                body: Body::Unsigned(1),
+            },
+            Element {
+                header: Header::new(Id::EbmlReadVersion, 3, 1),
+                body: Body::Unsigned(1),
+            },
+            Element {
+                header: Header::new(Id::EbmlMaxIdLength, 3, 1),
+                body: Body::Unsigned(4),
+            },
+            Element {
+                header: Header::new(Id::EbmlMaxSizeLength, 3, 1),
+                body: Body::Unsigned(8),
+            },
+            Element {
+                header: Header::new(Id::DocType, 3, 4),
+                body: Body::String("webm".to_string()),
+            },
+            Element {
+                header: Header::new(Id::DocTypeVersion, 3, 1),
+                body: Body::Unsigned(4),
+            },
+            Element {
+                header: Header::new(Id::DocTypeReadVersion, 3, 1),
+                body: Body::Unsigned(2),
+            },
+        ];
+
+        let expected = vec![ElementTree::Master(MasterElement {
+            header: Header::new(Id::Ebml, 5, 31),
+            children: vec![
+                ElementTree::Normal(Element {
+                    header: Header::new(Id::EbmlVersion, 3, 1),
+                    body: Body::Unsigned(1),
+                }),
+                ElementTree::Normal(Element {
+                    header: Header::new(Id::EbmlReadVersion, 3, 1),
+                    body: Body::Unsigned(1),
+                }),
+                ElementTree::Normal(Element {
+                    header: Header::new(Id::EbmlMaxIdLength, 3, 1),
+                    body: Body::Unsigned(4),
+                }),
+                ElementTree::Normal(Element {
+                    header: Header::new(Id::EbmlMaxSizeLength, 3, 1),
+                    body: Body::Unsigned(8),
+                }),
+                ElementTree::Normal(Element {
+                    header: Header::new(Id::DocType, 3, 4),
+                    body: Body::String("webm".to_string()),
+                }),
+                ElementTree::Normal(Element {
+                    header: Header::new(Id::DocTypeVersion, 3, 1),
+                    body: Body::Unsigned(4),
+                }),
+                ElementTree::Normal(Element {
+                    header: Header::new(Id::DocTypeReadVersion, 3, 1),
+                    body: Body::Unsigned(2),
+                }),
+            ],
+        })];
+
+        assert_eq!(build_element_trees(&elements), expected);
     }
 }
