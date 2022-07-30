@@ -9,7 +9,7 @@ use nom::{
     Err, IResult,
 };
 use num_traits::FromPrimitive;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 #[derive(Debug, PartialEq)]
 enum Type {
@@ -24,7 +24,7 @@ enum Type {
 }
 
 #[repr(u32)]
-#[derive(Debug, Clone, PartialEq, Primitive, Copy, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Primitive, Copy, Eq, Hash, Serialize)]
 pub enum Id {
     Unknown = 0x00,
     Ebml = 0x1A45DFA3,
@@ -362,7 +362,7 @@ fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
     ))
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Header {
     pub id: Id,
     pub header_size: usize,
@@ -427,14 +427,14 @@ fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
     Ok((input, Header::new(id, header_size, body_size)))
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum BinaryValue {
     SeekId(Id),
     Hidden,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum Body {
     Master,
@@ -447,7 +447,7 @@ pub enum Body {
     Binary(BinaryValue),
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Element {
     #[serde(flatten)]
     pub header: Header,
