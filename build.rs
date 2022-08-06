@@ -1,9 +1,24 @@
+use convert_case::{Case, Casing};
 use std::fs::File;
 use std::io::prelude::*;
 use xml::{reader::XmlEvent, EventReader};
 
 const EBML_XML: &str = include_str!("ebml.xml");
 const EBML_MATROSKA_XML: &str = include_str!("ebml_matroska.xml");
+
+fn variant_to_enum_literal(variant: &str) -> &str {
+    match variant {
+        "master" => "Master",
+        "uinteger" => "Unsigned",
+        "integer" => "Signed",
+        "string" => "String",
+        "binary" => "Binary",
+        "utf-8" => "Utf8",
+        "date" => "Date",
+        "float" => "Float",
+        _ => panic!("Variant not expected: {}", variant),
+    }
+}
 
 fn write_ebml_elements(file: &mut File) -> std::io::Result<()> {
     let mut event_reader = EventReader::from_str(EBML_XML);
@@ -21,10 +36,13 @@ fn write_ebml_elements(file: &mut File) -> std::io::Result<()> {
             if tag_name.local_name == "element" {
                 for attr in attributes {
                     match attr.name.local_name.as_str() {
-                        // Remove "-" in "CRC-32"
-                        "name" => write!(file, "    name = {}, ", attr.value.replace('-', ""))?,
+                        "name" => {
+                            write!(file, "    name = {}, ", attr.value.to_case(Case::Pascal))?
+                        }
                         "id" => write!(file, "id = {}, ", attr.value)?,
-                        "type" => writeln!(file, "type = {};", attr.value)?,
+                        "type" => {
+                            writeln!(file, "variant =  {};", variant_to_enum_literal(&attr.value))?
+                        }
                         _ => (),
                     }
                 }
@@ -54,11 +72,17 @@ fn write_matroska_elements(file: &mut File) -> std::io::Result<()> {
                             // Ignore restrictions with duplications
                             match attr.value.as_str() {
                                 "EBMLMaxIDLength" | "EBMLMaxSizeLength" => continue 'outer,
-                                _ => write!(file, "    name = {}, ", attr.value)?,
+                                _ => write!(
+                                    file,
+                                    "    name = {}, ",
+                                    attr.value.to_case(Case::Pascal)
+                                )?,
                             }
                         }
                         "id" => write!(file, "id = {}, ", attr.value)?,
-                        "type" => writeln!(file, "type = {};", attr.value)?,
+                        "type" => {
+                            writeln!(file, "variant =  {};", variant_to_enum_literal(&attr.value))?
+                        }
                         _ => (),
                     }
                 }

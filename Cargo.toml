@@ -17,6 +17,7 @@ clap = { version = "3", features = ["derive"] }
 
 [build-dependencies]
 xml-rs = "0.8"
+convert_case = "0.5"
 
 [profile.release]
 strip = true
