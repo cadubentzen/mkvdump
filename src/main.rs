@@ -11,7 +11,7 @@ use nom::{
     error::{Error, ErrorKind},
     Err, IResult,
 };
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 mod ebml;
 mod elements;
@@ -143,10 +143,27 @@ struct SimpleBlock {
 #[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(untagged)]
 enum BinaryValue {
-    Hidden,
+    #[serde(serialize_with = "serialize_short_payloads")]
+    Standard(Vec<u8>),
     SeekId(Id),
     SimpleBlock(SimpleBlock),
     Block(Block),
+    Void,
+}
+
+fn serialize_short_payloads<S: Serializer>(payload: &[u8], s: S) -> Result<S::Ok, S::Error> {
+    const MAX_LENGTH: usize = 64;
+    if payload.len() <= MAX_LENGTH {
+        let string_values = payload
+            .iter()
+            .map(|n| format!("{:02x}", n))
+            .fold("".to_owned(), |acc, s| acc + &s + " ")
+            .trim_end()
+            .to_owned();
+        s.serialize_str(&format!("[{}]", string_values))
+    } else {
+        s.serialize_str(&format!("{} bytes", payload.len()))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -195,7 +212,8 @@ fn parse_element(input: &[u8]) -> IResult<&[u8], Element> {
                 Id::SeekId => BinaryValue::SeekId(parse_id(&value).unwrap().1),
                 Id::SimpleBlock => BinaryValue::SimpleBlock(parse_simple_block(&value).unwrap().1),
                 Id::Block => BinaryValue::Block(parse_block(&value).unwrap().1),
-                _ => BinaryValue::Hidden,
+                Id::Void => BinaryValue::Void,
+                _ => BinaryValue::Standard(value),
             };
             (input, Body::Binary(binary_value))
         }),
@@ -539,7 +557,7 @@ mod tests {
                 EMPTY,
                 Element {
                     header: Header::new(Id::Crc32, 2, 4),
-                    body: Body::Binary(BinaryValue::Hidden)
+                    body: Body::Binary(BinaryValue::Standard(vec![0xAF, 0x93, 0x97, 0x18]))
                 }
             ))
         );
@@ -667,6 +685,21 @@ mod tests {
         })];
 
         assert_eq!(build_element_trees(&elements), expected);
+    }
+
+    #[test]
+    fn test_binary_custom_serializer() {
+        let binary_value = BinaryValue::Standard(vec![1, 2, 3]);
+        assert_eq!(
+            serde_yaml::to_string(&binary_value).unwrap().trim(),
+            "'[01 02 03]'"
+        );
+
+        let binary_value = BinaryValue::Standard(vec![0; 65]);
+        assert_eq!(
+            serde_yaml::to_string(&binary_value).unwrap().trim(),
+            "65 bytes"
+        );
     }
 }
 
