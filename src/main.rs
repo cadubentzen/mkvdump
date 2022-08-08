@@ -227,6 +227,9 @@ fn parse_string<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], Str
     let value = String::from_utf8(string_bytes.to_vec())
         .map_err(|_| Err::Failure(Error::new(input, ErrorKind::Fail)))?;
 
+    // Remove trimming null characters
+    let value = value.trim_end_matches('\0').to_string();
+
     Ok((input, value))
 }
 
@@ -485,7 +488,15 @@ mod tests {
         assert_eq!(
             parse_string(&Header::new(Id::DocType, 3, 4), &[0x77, 0x65, 0x62, 0x6D]),
             Ok((EMPTY, "webm".to_string()))
-        )
+        );
+
+        assert_eq!(
+            parse_string(
+                &Header::new(Id::DocType, 3, 6),
+                &[0x77, 0x65, 0x62, 0x6D, 0x00, 0x00]
+            ),
+            Ok((EMPTY, "webm".to_string()))
+        );
     }
 
     #[test]
