@@ -1,3 +1,4 @@
+use std::ops::Not;
 use std::{
     fs::File,
     io::{self, Read},
@@ -103,10 +104,49 @@ fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
+enum Lacing {
+    Xiph,
+    Ebml,
+    FixedSize,
+}
+
+// https://www.matroska.org/technical/basics.html#block-structure
+#[derive(Debug, Clone, PartialEq, Serialize)]
+struct Block {
+    track_number: u64,
+    timestamp: i16,
+    #[serde(skip_serializing_if = "Not::not")]
+    invisible: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    lacing: Option<Lacing>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    num_frames: Option<u8>,
+}
+
+// https://www.matroska.org/technical/basics.html#simpleblock-structure
+#[derive(Debug, Clone, PartialEq, Serialize)]
+struct SimpleBlock {
+    track_number: u64,
+    timestamp: i16,
+    #[serde(skip_serializing_if = "Not::not")]
+    keyframe: bool,
+    #[serde(skip_serializing_if = "Not::not")]
+    invisible: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    lacing: Option<Lacing>,
+    #[serde(skip_serializing_if = "Not::not")]
+    discardable: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    num_frames: Option<u8>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(untagged)]
 enum BinaryValue {
-    SeekId(Id),
     Hidden,
+    SeekId(Id),
+    SimpleBlock(SimpleBlock),
+    Block(Block),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -152,13 +192,9 @@ fn parse_element(input: &[u8]) -> IResult<&[u8], Element> {
         Type::Date => todo!(),
         Type::Binary => parse_binary(&header, input).map(|(input, value)| {
             let binary_value = match header.id {
-                Id::SeekId => parse_id(&value).map_or_else(
-                    |_| {
-                        eprintln!("Failed parsing SeekId. Returning hidden binary");
-                        BinaryValue::Hidden
-                    },
-                    |(_, id)| BinaryValue::SeekId(id),
-                ),
+                Id::SeekId => BinaryValue::SeekId(parse_id(&value).unwrap().1),
+                Id::SimpleBlock => BinaryValue::SimpleBlock(parse_simple_block(&value).unwrap().1),
+                Id::Block => BinaryValue::Block(parse_block(&value).unwrap().1),
                 _ => BinaryValue::Hidden,
             };
             (input, Body::Binary(binary_value))
@@ -224,6 +260,86 @@ fn parse_float<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], f64>
     } else {
         todo!()
     }
+}
+
+fn parse_i16(input: &[u8]) -> IResult<&[u8], i16> {
+    let (input, bytes) = take(2usize)(input)?;
+    let value = i16::from_be_bytes(bytes.try_into().unwrap());
+    Ok((input, value))
+}
+
+fn is_invisible(flags: u8) -> bool {
+    (flags & (1 << 3)) != 0
+}
+
+fn get_lacing(flags: u8) -> Option<Lacing> {
+    match (flags & (0b110)) >> 1 {
+        0b00 => None,
+        0b01 => Some(Lacing::Xiph),
+        0b11 => Some(Lacing::Ebml),
+        0b10 => Some(Lacing::FixedSize),
+        _ => unreachable!(),
+    }
+}
+
+fn parse_block(input: &[u8]) -> IResult<&[u8], Block> {
+    let (input, track_number) = parse_varint(input)?;
+    let (input, timestamp) = parse_i16(input)?;
+    let (input, flags) = take(1usize)(input)?;
+    let flags = flags[0];
+
+    let invisible = is_invisible(flags);
+    let lacing = get_lacing(flags);
+    let (input, num_frames) = if lacing != None {
+        let (input, next_byte) = take(1usize)(input)?;
+        let num_frames = next_byte[0];
+        (input, Some(num_frames + 1))
+    } else {
+        (input, None)
+    };
+
+    Ok((
+        input,
+        Block {
+            track_number,
+            timestamp,
+            invisible,
+            lacing,
+            num_frames,
+        },
+    ))
+}
+
+fn parse_simple_block(input: &[u8]) -> IResult<&[u8], SimpleBlock> {
+    let (input, track_number) = parse_varint(input)?;
+    let (input, timestamp) = parse_i16(input)?;
+    let (input, flags) = take(1usize)(input)?;
+    let flags = flags[0];
+
+    let keyframe = (flags & (1 << 7)) != 0;
+    let invisible = is_invisible(flags);
+    let lacing = get_lacing(flags);
+    let discardable = (flags & 0b1) != 0;
+    let (input, num_frames) = if lacing != None {
+        let (input, next_byte) = take(1usize)(input)?;
+        let num_frames = next_byte[0];
+        (input, Some(num_frames + 1))
+    } else {
+        (input, None)
+    };
+
+    Ok((
+        input,
+        SimpleBlock {
+            track_number,
+            timestamp,
+            keyframe,
+            invisible,
+            lacing,
+            discardable,
+            num_frames,
+        },
+    ))
 }
 
 #[derive(Debug, PartialEq, Serialize)]
@@ -441,6 +557,42 @@ mod tests {
                 }
             ))
         );
+    }
+
+    #[test]
+    fn test_parse_block() {
+        assert_eq!(
+            parse_block(&[0x81, 0x0F, 0x7A, 0x00]),
+            Ok((
+                EMPTY,
+                Block {
+                    track_number: 1,
+                    timestamp: 3962,
+                    invisible: false,
+                    lacing: None,
+                    num_frames: None
+                }
+            ))
+        )
+    }
+
+    #[test]
+    fn test_parse_simple_block() {
+        assert_eq!(
+            parse_simple_block(&[0x81, 0x00, 0x53, 0x00]),
+            Ok((
+                EMPTY,
+                SimpleBlock {
+                    track_number: 1,
+                    timestamp: 83,
+                    keyframe: false,
+                    invisible: false,
+                    lacing: None,
+                    discardable: false,
+                    num_frames: None,
+                }
+            ))
+        )
     }
 
     #[test]
