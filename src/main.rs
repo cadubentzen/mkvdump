@@ -15,8 +15,10 @@ use serde::{Serialize, Serializer};
 
 mod ebml;
 mod elements;
+mod enumerations;
 
-use crate::elements::*;
+use crate::elements::{Id, Type};
+use crate::enumerations::Enumeration;
 
 fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
     let (input, first_byte) = peek(take(1usize))(input)?;
@@ -170,7 +172,7 @@ fn serialize_short_payloads<S: Serializer>(payload: &[u8], s: S) -> Result<S::Ok
 #[serde(untagged)]
 enum Body {
     Master,
-    Unsigned(u64),
+    Unsigned(Enumeration),
     Signed(i64),
     Float(f64),
     String(String),
@@ -193,9 +195,8 @@ fn parse_element(input: &[u8]) -> IResult<&[u8], Element> {
 
     let (input, body) = match element_type {
         Type::Master => Ok((input, Body::Master)),
-        Type::Unsigned => {
-            parse_int(&header, input).map(|(input, value)| (input, Body::Unsigned(value)))
-        }
+        Type::Unsigned => parse_int(&header, input)
+            .map(|(input, value)| (input, Body::Unsigned(Enumeration::new(&header.id, value)))),
         Type::Signed => {
             parse_int(&header, input).map(|(input, value)| (input, Body::Signed(value)))
         }
@@ -429,6 +430,8 @@ fn print_element_trees(elements: &[Element], format: &str) {
 mod tests {
     use nom::Needed;
 
+    use crate::enumerations::TrackType;
+
     use super::*;
 
     const EMPTY: &[u8] = &[];
@@ -547,6 +550,33 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_enumeration() {
+        const INPUT: &[u8] = &[0x83, 0x81, 0x01];
+        assert_eq!(
+            parse_element(INPUT),
+            Ok((
+                EMPTY,
+                Element {
+                    header: Header::new(Id::TrackType, 2, 1),
+                    body: Body::Unsigned(Enumeration::TrackType(TrackType::Video))
+                }
+            ))
+        );
+
+        const INPUT_UNKNOWN_ENUMERATION: &[u8] = &[0x83, 0x81, 0xFF];
+        assert_eq!(
+            parse_element(INPUT_UNKNOWN_ENUMERATION),
+            Ok((
+                EMPTY,
+                Element {
+                    header: Header::new(Id::TrackType, 2, 1),
+                    body: Body::Unsigned(Enumeration::Unknown(255))
+                }
+            ))
+        );
+    }
+
+    #[test]
     fn test_parse_seek_id() {
         assert_eq!(
             parse_element(&[0x53, 0xAB, 0x84, 0x15, 0x49, 0xA9, 0x66]),
@@ -633,19 +663,19 @@ mod tests {
             },
             Element {
                 header: Header::new(Id::EbmlVersion, 3, 1),
-                body: Body::Unsigned(1),
+                body: Body::Unsigned(1.into()),
             },
             Element {
                 header: Header::new(Id::EbmlReadVersion, 3, 1),
-                body: Body::Unsigned(1),
+                body: Body::Unsigned(1.into()),
             },
             Element {
                 header: Header::new(Id::EbmlMaxIdLength, 3, 1),
-                body: Body::Unsigned(4),
+                body: Body::Unsigned(4.into()),
             },
             Element {
                 header: Header::new(Id::EbmlMaxSizeLength, 3, 1),
-                body: Body::Unsigned(8),
+                body: Body::Unsigned(8.into()),
             },
             Element {
                 header: Header::new(Id::DocType, 3, 4),
@@ -653,11 +683,11 @@ mod tests {
             },
             Element {
                 header: Header::new(Id::DocTypeVersion, 3, 1),
-                body: Body::Unsigned(4),
+                body: Body::Unsigned(4.into()),
             },
             Element {
                 header: Header::new(Id::DocTypeReadVersion, 3, 1),
-                body: Body::Unsigned(2),
+                body: Body::Unsigned(2.into()),
             },
         ];
 
@@ -666,19 +696,19 @@ mod tests {
             children: vec![
                 ElementTree::Normal(Element {
                     header: Header::new(Id::EbmlVersion, 3, 1),
-                    body: Body::Unsigned(1),
+                    body: Body::Unsigned(1.into()),
                 }),
                 ElementTree::Normal(Element {
                     header: Header::new(Id::EbmlReadVersion, 3, 1),
-                    body: Body::Unsigned(1),
+                    body: Body::Unsigned(1.into()),
                 }),
                 ElementTree::Normal(Element {
                     header: Header::new(Id::EbmlMaxIdLength, 3, 1),
-                    body: Body::Unsigned(4),
+                    body: Body::Unsigned(4.into()),
                 }),
                 ElementTree::Normal(Element {
                     header: Header::new(Id::EbmlMaxSizeLength, 3, 1),
-                    body: Body::Unsigned(8),
+                    body: Body::Unsigned(8.into()),
                 }),
                 ElementTree::Normal(Element {
                     header: Header::new(Id::DocType, 3, 4),
@@ -686,11 +716,11 @@ mod tests {
                 }),
                 ElementTree::Normal(Element {
                     header: Header::new(Id::DocTypeVersion, 3, 1),
-                    body: Body::Unsigned(4),
+                    body: Body::Unsigned(4.into()),
                 }),
                 ElementTree::Normal(Element {
                     header: Header::new(Id::DocTypeReadVersion, 3, 1),
-                    body: Body::Unsigned(2),
+                    body: Body::Unsigned(2.into()),
                 }),
             ],
         })];
@@ -710,6 +740,22 @@ mod tests {
         assert_eq!(
             serde_yaml::to_string(&binary_value).unwrap().trim(),
             "65 bytes"
+        );
+    }
+
+    #[test]
+    fn test_serialize_enumeration() {
+        assert_eq!(
+            serde_yaml::to_string(&Enumeration::TrackType(TrackType::Video))
+                .unwrap()
+                .trim(),
+            "Video"
+        );
+        assert_eq!(
+            serde_yaml::to_string(&Enumeration::Unknown(5u64))
+                .unwrap()
+                .trim(),
+            "5"
         );
     }
 }
