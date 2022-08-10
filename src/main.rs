@@ -391,16 +391,20 @@ fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
                 let mut children = Vec::<Element>::new();
                 while size_remaining > 0 {
                     index += 1;
-                    let next_child = &elements[index];
-                    size_remaining -= if let Body::Master = next_child.body {
-                        // Master elements' body size should not count in the recursion
-                        // as the children would duplicate the size count, so
-                        // we only consider the header size on the calculation.
-                        next_child.header.header_size as u64
+                    if let Some(next_child) = elements.get(index) {
+                        size_remaining -= if let Body::Master = next_child.body {
+                            // Master elements' body size should not count in the recursion
+                            // as the children would duplicate the size count, so
+                            // we only consider the header size on the calculation.
+                            next_child.header.header_size as u64
+                        } else {
+                            next_child.header.size
+                        };
+                        children.push(next_child.clone());
                     } else {
-                        next_child.header.size
-                    };
-                    children.push(next_child.clone());
+                        // Elements have ended before reaching the size of the master element
+                        break;
+                    }
                 }
                 trees.push(ElementTree::Master(MasterElement {
                     header: element.header.clone(),
@@ -757,6 +761,26 @@ mod tests {
                 .trim(),
             "5"
         );
+    }
+
+    #[test]
+    fn test_parse_incomplete_file_should_not_panic() {
+        const INPUT: &[u8] = include_bytes!("../inputs/incomplete.hdr");
+        let mut elements = Vec::<Element>::new();
+        let mut read_buffer = INPUT;
+        loop {
+            match parse_element(read_buffer) {
+                Ok((new_read_buffer, element)) => {
+                    elements.push(element);
+                    if new_read_buffer.is_empty() {
+                        break;
+                    }
+                    read_buffer = new_read_buffer;
+                }
+                _ => panic!("Something is wrong"),
+            }
+        }
+        let _ = build_element_trees(&elements);
     }
 }
 
