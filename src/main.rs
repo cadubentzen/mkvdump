@@ -420,12 +420,29 @@ fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
     trees
 }
 
-fn print_element_trees(elements: &[Element], format: &str) {
-    let element_trees = build_element_trees(elements);
+fn parse_buffer_to_end(input: &[u8]) -> Vec<ElementTree> {
+    let mut elements = Vec::<Element>::new();
+    let mut read_buffer = input;
+    loop {
+        match parse_element(read_buffer) {
+            Ok((new_read_buffer, element)) => {
+                elements.push(element);
+                if new_read_buffer.is_empty() {
+                    break;
+                }
+                read_buffer = new_read_buffer;
+            }
+            _ => panic!("Something is wrong"),
+        }
+    }
+    build_element_trees(&elements)
+}
+
+fn print_element_trees(element_trees: &[ElementTree], format: &str) {
     let serialized = if format == "json" {
-        serde_json::to_string_pretty(&element_trees).unwrap()
+        serde_json::to_string_pretty(element_trees).unwrap()
     } else {
-        serde_yaml::to_string(&element_trees).unwrap()
+        serde_yaml::to_string(element_trees).unwrap()
     };
     println!("{}", serialized);
 }
@@ -765,22 +782,16 @@ mod tests {
 
     #[test]
     fn test_parse_incomplete_file_should_not_panic() {
-        const INPUT: &[u8] = include_bytes!("../inputs/incomplete.hdr");
-        let mut elements = Vec::<Element>::new();
-        let mut read_buffer = INPUT;
-        loop {
-            match parse_element(read_buffer) {
-                Ok((new_read_buffer, element)) => {
-                    elements.push(element);
-                    if new_read_buffer.is_empty() {
-                        break;
-                    }
-                    read_buffer = new_read_buffer;
-                }
-                _ => panic!("Something is wrong"),
-            }
-        }
-        let _ = build_element_trees(&elements);
+        insta::assert_yaml_snapshot!(parse_buffer_to_end(include_bytes!(
+            "../inputs/incomplete.hdr"
+        )));
+    }
+
+    #[test]
+    fn test_parse_header_encrypted() {
+        insta::assert_yaml_snapshot!(parse_buffer_to_end(include_bytes!(
+            "../inputs/encrypted.hdr"
+        )));
     }
 }
 
@@ -804,33 +815,9 @@ fn main() -> io::Result<()> {
     let mut buffer = Vec::<u8>::new();
     file.read_to_end(&mut buffer)?;
 
-    let mut elements = Vec::<Element>::new();
+    let element_trees = parse_buffer_to_end(&buffer);
 
-    let mut read_buffer = &buffer[..];
-    loop {
-        match parse_element(read_buffer) {
-            Ok((new_read_buffer, element)) => {
-                elements.push(element);
-                if new_read_buffer.is_empty() {
-                    break;
-                }
-                read_buffer = new_read_buffer;
-            }
-            Err(nom::Err::Incomplete(needed)) => {
-                println!(
-                    "Needed: {:?}\nPartial result:\n{}",
-                    needed,
-                    serde_yaml::to_string(&elements).unwrap()
-                );
-                todo!("Partial reads not implemented")
-            }
-            Err(_) => {
-                panic!("Something is wrong");
-            }
-        }
-    }
-
-    print_element_trees(&elements, &args.format);
+    print_element_trees(&element_trees, &args.format);
 
     Ok(())
 }

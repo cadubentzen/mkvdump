@@ -1,0 +1,150 @@
+---
+source: src/main.rs
+assertion_line: 793
+expression: "parse_buffer_to_end(include_bytes!(\"../inputs/encrypted.hdr\"))"
+---
+- id: Ebml
+  header_size: 5
+  size: 36
+  children:
+    - id: EbmlVersion
+      header_size: 3
+      size: 4
+      value: 1
+    - id: EbmlReadVersion
+      header_size: 3
+      size: 4
+      value: 1
+    - id: EbmlMaxIdLength
+      header_size: 3
+      size: 4
+      value: 4
+    - id: EbmlMaxSizeLength
+      header_size: 3
+      size: 4
+      value: 8
+    - id: DocType
+      header_size: 3
+      size: 7
+      value: webm
+    - id: DocTypeVersion
+      header_size: 3
+      size: 4
+      value: 4
+    - id: DocTypeReadVersion
+      header_size: 3
+      size: 4
+      value: 2
+- id: Segment
+  header_size: 12
+  size: 72057594037927947
+  children:
+    - id: Void
+      header_size: 2
+      size: 89
+      value: ~
+    - id: Info
+      header_size: 5
+      size: 50
+      children:
+        - id: TimestampScale
+          header_size: 4
+          size: 7
+          value: 1000000
+        - id: MuxingApp
+          header_size: 3
+          size: 19
+          value: Bitmovin Encoder
+        - id: WritingApp
+          header_size: 3
+          size: 19
+          value: Bitmovin Encoder
+    - id: Tracks
+      header_size: 5
+      size: 108
+      children:
+        - id: TrackEntry
+          header_size: 2
+          size: 103
+          children:
+            - id: TrackNumber
+              header_size: 2
+              size: 3
+              value: 1
+            - id: TrackUid
+              header_size: 3
+              size: 4
+              value: 1
+            - id: TrackType
+              header_size: 2
+              size: 3
+              value: Video
+            - id: CodecId
+              header_size: 2
+              size: 7
+              value: V_VP9
+            - id: CodecPrivate
+              header_size: 3
+              size: 15
+              value: "[01 01 00 02 01 14 03 01 08 04 01 01]"
+            - id: ContentEncodings
+              header_size: 3
+              size: 51
+              children:
+                - id: ContentEncoding
+                  header_size: 3
+                  size: 48
+                  children:
+                    - id: ContentEncodingOrder
+                      header_size: 3
+                      size: 4
+                      value: 0
+                    - id: ContentEncodingScope
+                      header_size: 3
+                      size: 4
+                      value: Block
+                    - id: ContentEncodingType
+                      header_size: 3
+                      size: 4
+                      value: Encryption
+                    - id: ContentEncryption
+                      header_size: 3
+                      size: 33
+                      children:
+                        - id: ContentEncAlgo
+                          header_size: 3
+                          size: 4
+                          value: Aes
+                        - id: ContentEncKeyId
+                          header_size: 3
+                          size: 19
+                          value: "[eb 67 6a bb cb 34 5e 96 bb cf 61 66 30 f1 a3 da]"
+                        - id: ContentEncAesSettings
+                          header_size: 3
+                          size: 7
+                          children:
+                            - id: AesSettingsCipherMode
+                              header_size: 3
+                              size: 4
+                              value: AesCtr
+            - id: Video
+              header_size: 2
+              size: 18
+              children:
+                - id: PixelWidth
+                  header_size: 2
+                  size: 4
+                  value: 360
+                - id: PixelHeight
+                  header_size: 2
+                  size: 3
+                  value: 240
+                - id: DisplayWidth
+                  header_size: 3
+                  size: 5
+                  value: 360
+                - id: DisplayHeight
+                  header_size: 3
+                  size: 4
+                  value: 240
+

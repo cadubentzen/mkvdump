@@ -16,5 +16,8 @@ clap = { version = "3", features = ["derive"] }
 xml-rs = "0.8"
 convert_case = "0.5"
 
+[dev-dependencies]
+insta = { version = "1.18.1", features = ["yaml"] }
+
 [profile.release]
 strip = true
