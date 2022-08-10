@@ -72,8 +72,7 @@ macro_rules! ebml_enumerations {
             pub(crate) fn new(id: &Id, value: u64) -> Self {
                 match id {
                     $(
-                        Id::$id => $id::new(value).map_or(Self::Unknown(value), Self::$id)
-                        ,
+                        Id::$id => $id::new(value).map_or(Self::Unknown(value), Self::$id),
                     )+
                     _ => Self::Unknown(value)
                 }
