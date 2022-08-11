@@ -79,15 +79,14 @@ impl Header {
     }
 }
 
-// TODO: turn into a loop
 fn count_leading_zero_bits(input: u8) -> u8 {
-    if input & 0b10000000 != 0 {
-        0
-    } else if input == 0 {
-        8
-    } else {
-        count_leading_zero_bits(input << 1) + 1
+    const MASK: u8 = 0b10000000;
+    for leading_zeros in 0..8 {
+        if input >= (MASK >> leading_zeros) {
+            return leading_zeros;
+        }
     }
+    8
 }
 
 fn parse_varint(first_input: &[u8]) -> IResult<&[u8], Option<u64>> {
