@@ -26,14 +26,11 @@ struct Element {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 enum ElementDetail {
-    #[serde(rename(deserialize = "documentation"))]
     Documentation(Documentation),
-    #[serde(rename(deserialize = "extension"))]
     Extension(Extension),
-    #[serde(rename(deserialize = "restriction"))]
     Restriction(Restriction),
-    #[serde(rename(deserialize = "implementation_note"))]
     ImplementationNote(ImplementationNote),
 }
 
