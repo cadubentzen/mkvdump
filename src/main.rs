@@ -45,17 +45,35 @@ struct Header {
     pub id: Id,
     pub header_size: usize,
     #[serde(skip_serializing)]
-    pub body_size: u64,
-    pub size: u64,
+    pub body_size: Option<u64>,
+    #[serde(serialize_with = "serialize_size")]
+    pub size: Option<u64>,
+}
+
+fn serialize_size<S: Serializer>(size: &Option<u64>, s: S) -> Result<S::Ok, S::Error> {
+    if let Some(size) = size {
+        s.serialize_u64(*size)
+    } else {
+        s.serialize_str("Unknown")
+    }
 }
 
 impl Header {
-    fn new(id: Id, header_size: usize, body_size: u64) -> Header {
-        Header {
+    fn new(id: Id, header_size: usize, body_size: u64) -> Self {
+        Self {
             id,
             header_size,
-            body_size,
-            size: header_size as u64 + body_size,
+            body_size: Some(body_size),
+            size: Some(header_size as u64 + body_size),
+        }
+    }
+
+    fn with_uknown_size(id: Id, header_size: usize) -> Self {
+        Self {
+            id,
+            header_size,
+            body_size: None,
+            size: None,
         }
     }
 }
@@ -71,7 +89,7 @@ fn count_leading_zero_bits(input: u8) -> u8 {
     }
 }
 
-fn parse_varint(first_input: &[u8]) -> IResult<&[u8], u64> {
+fn parse_varint(first_input: &[u8]) -> IResult<&[u8], Option<u64>> {
     let (input, first_byte) = peek(take(1usize))(first_input)?;
     let first_byte = first_byte[0];
 
@@ -90,9 +108,14 @@ fn parse_varint(first_input: &[u8]) -> IResult<&[u8], u64> {
 
     // discard varint prefix (zeros + market bit)
     let num_bits_in_value = 7 * vint_prefix_size;
-    value &= (1 << num_bits_in_value) - 1;
+    let bitmask = (1 << num_bits_in_value) - 1;
+    value &= bitmask;
 
-    Ok((input, value))
+    // If all VINT_DATA bits are set to 1, it's an unkown size/value
+    // https://github.com/ietf-wg-cellar/ebml-specification/blob/master/specification.markdown#unknown-data-size
+    let result = if value != bitmask { Some(value) } else { None };
+
+    Ok((input, result))
 }
 
 fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
@@ -100,9 +123,19 @@ fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
     let (input, id) = parse_id(input)?;
     let (input, body_size) = parse_varint(input)?;
 
+    if body_size.is_none() && id.get_type() != Type::Master {
+        panic!("Unknown sizes are only supported in Master elements");
+    }
+
     let header_size = initial_len - input.len();
 
-    Ok((input, Header::new(id, header_size, body_size)))
+    let header = if let Some(body_size) = body_size {
+        Header::new(id, header_size, body_size)
+    } else {
+        Header::with_uknown_size(id, header_size)
+    };
+
+    Ok((input, header))
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -224,7 +257,8 @@ fn parse_element(input: &[u8]) -> IResult<&[u8], Element> {
 }
 
 fn parse_string<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], String> {
-    let (input, string_bytes) = take(metadata.body_size)(input)?;
+    let (input, string_bytes) =
+        take(metadata.body_size.expect("Strings need a known body size"))(input)?;
     let value = String::from_utf8(string_bytes.to_vec())
         .map_err(|_| Err::Failure(Error::new(input, ErrorKind::Fail)))?;
 
@@ -235,7 +269,7 @@ fn parse_string<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], Str
 }
 
 fn parse_binary<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], Vec<u8>> {
-    let (input, bytes) = take(metadata.body_size)(input)?;
+    let (input, bytes) = take(metadata.body_size.expect("Binaries need a known body size"))(input)?;
     let value = Vec::from(bytes);
 
     Ok((input, value))
@@ -261,7 +295,8 @@ fn parse_int<'a, T: Integer64FromBigEndianBytes>(
     metadata: &Header,
     input: &'a [u8],
 ) -> IResult<&'a [u8], T> {
-    let (input, int_bytes) = take(metadata.body_size)(input)?;
+    let (input, int_bytes) =
+        take(metadata.body_size.expect("Integers need a known body size"))(input)?;
     // FIXME: any efficient way to avoid this copy here?
     let mut value_buffer = [0u8; 8];
     value_buffer[(8 - int_bytes.len())..].copy_from_slice(int_bytes);
@@ -271,12 +306,13 @@ fn parse_int<'a, T: Integer64FromBigEndianBytes>(
 }
 
 fn parse_float<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], f64> {
-    let (input, float_bytes) = take(metadata.body_size)(input)?;
+    let body_size = metadata.body_size.expect("Floats need a known body size");
+    let (input, float_bytes) = take(body_size)(input)?;
 
-    if metadata.body_size == 4 {
+    if body_size == 4 {
         let value = f32::from_be_bytes(float_bytes.try_into().unwrap()) as f64;
         Ok((input, value))
-    } else if metadata.body_size == 8 {
+    } else if body_size == 8 {
         let value = f64::from_be_bytes(float_bytes.try_into().unwrap());
         Ok((input, value))
     } else {
@@ -306,6 +342,7 @@ fn get_lacing(flags: u8) -> Option<Lacing> {
 
 fn parse_block(input: &[u8]) -> IResult<&[u8], Block> {
     let (input, track_number) = parse_varint(input)?;
+    let track_number = track_number.expect("Blocks need a known track number");
     let (input, timestamp) = parse_i16(input)?;
     let (input, flags) = take(1usize)(input)?;
     let flags = flags[0];
@@ -334,6 +371,7 @@ fn parse_block(input: &[u8]) -> IResult<&[u8], Block> {
 
 fn parse_simple_block(input: &[u8]) -> IResult<&[u8], SimpleBlock> {
     let (input, track_number) = parse_varint(input)?;
+    let track_number = track_number.expect("SimpleBlocks need a known track number");
     let (input, timestamp) = parse_i16(input)?;
     let (input, flags) = take(1usize)(input)?;
     let flags = flags[0];
@@ -386,7 +424,19 @@ fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
         let element = &elements[index];
         match element.body {
             Body::Master => {
-                let mut size_remaining = element.header.body_size;
+                //
+                let mut size_remaining = element.header.body_size.unwrap_or_else(|| match element
+                    .header
+                    .id
+                {
+                    // Only Segment and Cluster have unknownsizeallowed="1" in ebml_matroska.xml.
+                    // Also mentioned in https://www.w3.org/TR/mse-byte-stream-format-webm/
+                    // FIXME (#13): this u64::MAX hack would not be needed if we built the tree up from
+                    // the element paths, rather, than relying on the sizes as we do now.
+                    Id::Segment | Id::Cluster => u64::MAX,
+                    _ => panic!("Only Segment or Cluster elements can have unknown sizes"),
+                });
+
                 // TODO: no need to copy here
                 let mut children = Vec::<Element>::new();
                 while size_remaining > 0 {
@@ -398,7 +448,10 @@ fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
                             // we only consider the header size on the calculation.
                             next_child.header.header_size as u64
                         } else {
-                            next_child.header.size
+                            next_child
+                                .header
+                                .size
+                                .expect("Only Master elements can have unknown size")
                         };
                         children.push(next_child.clone());
                     } else {
@@ -487,15 +540,18 @@ mod tests {
 
     #[test]
     fn test_parse_varint() {
-        assert_eq!(parse_varint(&[0x9F]), Ok((EMPTY, 31)));
-        assert_eq!(parse_varint(&[0x81]), Ok((EMPTY, 1)));
-        assert_eq!(parse_varint(&[0x53, 0xAC]), Ok((EMPTY, 5036)));
+        assert_eq!(parse_varint(&[0x9F]), Ok((EMPTY, Some(31))));
+        assert_eq!(parse_varint(&[0x81]), Ok((EMPTY, Some(1))));
+        assert_eq!(parse_varint(&[0x53, 0xAC]), Ok((EMPTY, Some(5036))));
 
         const INVALID_VARINT: &[u8] = &[0x00, 0xAC];
         assert_eq!(
             parse_varint(INVALID_VARINT),
             Err(Err::Failure(Error::new(INVALID_VARINT, ErrorKind::Fail)))
         );
+
+        const UNKNOWN_VARINT: &[u8] = &[0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
+        assert_eq!(parse_varint(UNKNOWN_VARINT), Ok((EMPTY, None)));
     }
 
     #[test]

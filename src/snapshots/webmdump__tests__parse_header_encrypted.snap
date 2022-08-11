@@ -1,6 +1,6 @@
 ---
 source: src/main.rs
-assertion_line: 793
+assertion_line: 843
 expression: "parse_buffer_to_end(include_bytes!(\"../inputs/encrypted.hdr\"))"
 ---
 - id: Ebml
@@ -37,7 +37,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/encrypted.hdr\"))"
       value: 2
 - id: Segment
   header_size: 12
-  size: 72057594037927947
+  size: Unknown
   children:
     - id: Void
       header_size: 2
