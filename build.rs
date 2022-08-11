@@ -1,10 +1,99 @@
-use convert_case::{Case, Casing};
+use std::collections::HashSet;
 use std::fs::File;
-use std::io::prelude::*;
-use xml::{reader::XmlEvent, EventReader};
+use std::io::Write;
+
+use convert_case::{Case, Casing};
+use serde::{Deserialize, Serialize};
 
 const EBML_XML: &str = include_str!("ebml.xml");
 const EBML_MATROSKA_XML: &str = include_str!("ebml_matroska.xml");
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+struct EBMLSchema {
+    #[serde(rename(deserialize = "$value"))]
+    elements: Vec<Element>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+struct Element {
+    name: String,
+    path: String,
+    id: String,
+    #[serde(rename(deserialize = "type"))]
+    variant: String,
+    #[serde(rename(deserialize = "$value"))]
+    details: Option<Vec<ElementDetail>>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+enum ElementDetail {
+    #[serde(rename(deserialize = "documentation"))]
+    Documentation(Documentation),
+    #[serde(rename(deserialize = "extension"))]
+    Extension(Extension),
+    #[serde(rename(deserialize = "restriction"))]
+    Restriction(Restriction),
+    #[serde(rename(deserialize = "implementation_note"))]
+    ImplementationNote(ImplementationNote),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+struct Documentation {
+    #[serde(rename(deserialize = "$value"))]
+    text: String,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+struct Extension {
+    webm: Option<bool>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+struct Restriction {
+    #[serde(rename(deserialize = "$value"))]
+    enums: Vec<Enum>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+struct Enum {
+    value: String,
+    label: String,
+    #[serde(rename(deserialize = "$value"))]
+    documentation: Option<Vec<Documentation>>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+struct ImplementationNote {
+    #[serde(rename(deserialize = "$value"))]
+    text: String,
+}
+
+fn get_elements() -> Vec<Element> {
+    let ebml_schema: EBMLSchema = serde_xml_rs::from_str(EBML_XML).unwrap();
+    let ebml_matroska_schema: EBMLSchema = serde_xml_rs::from_str(EBML_MATROSKA_XML).unwrap();
+
+    // Ignoring Matroska overrides of EBML elements
+    let mut known_elements = HashSet::<String>::new();
+    let mut elements = Vec::<Element>::new();
+    for element in ebml_schema
+        .elements
+        .into_iter()
+        .chain(ebml_matroska_schema.elements.into_iter())
+    {
+        if known_elements.get(&element.name).is_none() {
+            known_elements.insert(element.name.clone());
+            elements.push(element);
+        }
+    }
+
+    // Pre-format names and variants
+    elements.iter_mut().for_each(|e| {
+        e.name = e.name.to_case(Case::Pascal);
+        e.variant = variant_to_enum_literal(&e.variant).to_string();
+    });
+
+    elements
+}
 
 fn variant_to_enum_literal(variant: &str) -> &str {
     match variant {
@@ -20,79 +109,25 @@ fn variant_to_enum_literal(variant: &str) -> &str {
     }
 }
 
-fn write_ebml_elements(file: &mut File) -> std::io::Result<()> {
-    let mut event_reader = EventReader::from_str(EBML_XML);
-    while let Ok(event) = event_reader.next() {
-        if event == XmlEvent::EndDocument {
-            break;
-        }
+fn apply_label_quirks(label: &str, reserved_index: &mut i32) -> String {
+    let mut label = label
+        .replace(|c: char| !c.is_ascii_alphanumeric(), " ")
+        .to_case(Case::Pascal);
 
-        if let XmlEvent::StartElement {
-            name: tag_name,
-            attributes,
-            namespace: _,
-        } = event
-        {
-            if tag_name.local_name == "element" {
-                for attr in attributes {
-                    match attr.name.local_name.as_str() {
-                        "name" => {
-                            write!(file, "    name = {}, ", attr.value.to_case(Case::Pascal))?
-                        }
-                        "id" => write!(file, "id = {}, ", attr.value)?,
-                        "type" => {
-                            writeln!(file, "variant =  {};", variant_to_enum_literal(&attr.value))?
-                        }
-                        _ => (),
-                    }
-                }
-            }
-        }
+    // Hack because identifiers can't start with a number
+    if label == "3Des" {
+        label = "TripleDes".to_string();
     }
-    Ok(())
+    // "Reserved" sometimes repeats in enums
+    else if label == "Reserved" {
+        label = format!("Reserved{}", reserved_index);
+        *reserved_index += 1;
+    }
+
+    label
 }
 
-fn write_matroska_elements(file: &mut File) -> std::io::Result<()> {
-    let mut event_reader = EventReader::from_str(EBML_MATROSKA_XML);
-    'outer: while let Ok(event) = event_reader.next() {
-        if event == XmlEvent::EndDocument {
-            break;
-        }
-
-        if let XmlEvent::StartElement {
-            name: tag_name,
-            attributes,
-            namespace: _,
-        } = event
-        {
-            if tag_name.local_name == "element" {
-                for attr in attributes {
-                    match attr.name.local_name.as_str() {
-                        "name" => {
-                            // Ignore restrictions with duplications
-                            match attr.value.as_str() {
-                                "EBMLMaxIDLength" | "EBMLMaxSizeLength" => continue 'outer,
-                                _ => write!(
-                                    file,
-                                    "    name = {}, ",
-                                    attr.value.to_case(Case::Pascal)
-                                )?,
-                            }
-                        }
-                        "id" => write!(file, "id = {}, ", attr.value)?,
-                        "type" => {
-                            writeln!(file, "variant =  {};", variant_to_enum_literal(&attr.value))?
-                        }
-                        _ => (),
-                    }
-                }
-            }
-        }
-    }
-    Ok(())
-}
-
-fn create_elements_file() -> std::io::Result<()> {
+fn create_elements_file(elements: &[Element]) -> std::io::Result<()> {
     let mut file = File::create("src/elements.rs")?;
 
     writeln!(
@@ -102,96 +137,20 @@ fn create_elements_file() -> std::io::Result<()> {
     writeln!(file, "// Instead, update ebml.xml and ebml_matroska.xml")?;
     writeln!(file, "use crate::ebml::ebml_elements;")?;
     writeln!(file, "ebml_elements! {{")?;
-    write_ebml_elements(&mut file)?;
-    write_matroska_elements(&mut file)?;
+
+    for element in elements {
+        writeln!(
+            file,
+            "    name = {}, id = {}, variant = {};",
+            element.name, element.id, element.variant
+        )?;
+    }
     writeln!(file, "}}")?;
 
     Ok(())
 }
 
-fn write_matroska_enumerations(file: &mut File) -> std::io::Result<()> {
-    let mut event_reader = EventReader::from_str(EBML_MATROSKA_XML);
-    let mut last_name = "".to_string();
-    let mut last_type = "".to_string();
-    let mut first_enum = true;
-    let mut reserved_index = 1;
-    while let Ok(event) = event_reader.next() {
-        if event == XmlEvent::EndDocument {
-            break;
-        }
-
-        if let XmlEvent::StartElement {
-            name: tag_name,
-            attributes,
-            namespace: _,
-        } = event
-        {
-            match tag_name.local_name.as_str() {
-                "element" => {
-                    for attr in attributes {
-                        match attr.name.local_name.as_str() {
-                            "name" => {
-                                last_name = attr.value.to_case(Case::Pascal);
-                            }
-                            "type" => last_type = variant_to_enum_literal(&attr.value).to_string(),
-                            _ => (),
-                        }
-                    }
-                }
-                "enum" => {
-                    if last_type != "Unsigned" {
-                        continue;
-                    }
-
-                    if !last_name.is_empty() {
-                        reserved_index = 1;
-                        if !first_enum {
-                            writeln!(file, "    }};")?;
-                        }
-                        writeln!(file, "    {} {{ ", last_name)?;
-                        first_enum = false;
-                        last_name.clear();
-                    }
-
-                    let mut label = "".to_string();
-                    let mut value = "".to_string();
-                    for attr in attributes {
-                        match attr.name.local_name.as_str() {
-                            "value" => {
-                                value = attr.value;
-                            }
-                            "label" => {
-                                label = attr
-                                    .value
-                                    .replace(|c: char| !c.is_ascii_alphanumeric(), " ")
-                                    .to_case(Case::Pascal);
-                                // Hack because identifiers can't start with a number
-                                if label == "3Des" {
-                                    label = "TripleDes".to_string();
-                                }
-                                // "Reserved" sometimes repeats in enums
-                                else if label == "Reserved" {
-                                    label = format!("Reserved{}", reserved_index);
-                                    reserved_index += 1;
-                                }
-                            }
-                            _ => (),
-                        }
-                    }
-                    assert!(!label.is_empty());
-                    assert!(!value.is_empty());
-
-                    writeln!(file, "        {} = {},", label, value)?;
-                }
-                _ => (),
-            }
-        }
-    }
-    writeln!(file, "}};")?;
-    Ok(())
-}
-
-fn create_enumerations_file() -> std::io::Result<()> {
+fn create_enumerations_file(elements: &[Element]) -> std::io::Result<()> {
     let mut file = File::create("src/enumerations.rs")?;
 
     writeln!(
@@ -201,7 +160,29 @@ fn create_enumerations_file() -> std::io::Result<()> {
     writeln!(file, "// Instead, update ebml.xml and ebml_matroska.xml")?;
     writeln!(file, "use crate::ebml::ebml_enumerations;")?;
     writeln!(file, "ebml_enumerations! {{")?;
-    write_matroska_enumerations(&mut file)?;
+
+    for element in elements {
+        let mut reserved_index = 1;
+        if element.variant != "Unsigned" {
+            continue;
+        }
+        if let Some(details) = &element.details {
+            for detail in details {
+                if let ElementDetail::Restriction(restriction) = detail {
+                    writeln!(file, "    {} {{", element.name)?;
+                    for enumeration in &restriction.enums {
+                        writeln!(
+                            file,
+                            "        {} = {},",
+                            apply_label_quirks(&enumeration.label, &mut reserved_index),
+                            enumeration.value
+                        )?;
+                    }
+                    writeln!(file, "    }};")?;
+                }
+            }
+        }
+    }
     writeln!(file, "}}")?;
 
     Ok(())
@@ -211,8 +192,9 @@ fn main() -> std::io::Result<()> {
     println!("cargo:rerun-if-changed=ebml.xml");
     println!("cargo:rerun-if-changed=ebml_matroska.xml");
 
-    create_elements_file()?;
-    create_enumerations_file()?;
+    let elements = get_elements();
+    create_elements_file(&elements)?;
+    create_enumerations_file(&elements)?;
 
     Ok(())
 }

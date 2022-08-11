@@ -14,7 +14,8 @@ clap = { version = "3", features = ["derive"] }
 chrono = { version = "0.4", features = ["serde"] }
 
 [build-dependencies]
-xml-rs = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+serde-xml-rs = "0.5"
 convert_case = "0.5"
 
 [dev-dependencies]

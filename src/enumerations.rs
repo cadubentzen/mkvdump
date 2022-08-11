@@ -2,11 +2,11 @@
 // Instead, update ebml.xml and ebml_matroska.xml
 use crate::ebml::ebml_enumerations;
 ebml_enumerations! {
-    ChapterTranslateCodec { 
+    ChapterTranslateCodec {
         MatroskaScript = 0,
         DvdMenu = 1,
     };
-    TrackType { 
+    TrackType {
         Video = 1,
         Audio = 2,
         Complex = 3,
@@ -16,16 +16,16 @@ ebml_enumerations! {
         Control = 32,
         Metadata = 33,
     };
-    TrackTranslateCodec { 
+    TrackTranslateCodec {
         MatroskaScript = 0,
         DvdMenu = 1,
     };
-    FlagInterlaced { 
+    FlagInterlaced {
         Undetermined = 0,
         Interlaced = 1,
         Progressive = 2,
     };
-    FieldOrder { 
+    FieldOrder {
         Progressive = 0,
         Tff = 1,
         Undetermined = 2,
@@ -33,7 +33,7 @@ ebml_enumerations! {
         BffSwapped = 9,
         TffSwapped = 14,
     };
-    StereoMode { 
+    StereoMode {
         Mono = 0,
         SideBySideLeftEyeFirst = 1,
         TopBottomRightEyeIsFirst = 2,
@@ -50,29 +50,29 @@ ebml_enumerations! {
         BothEyesLacedInOneBlockLeftEyeIsFirst = 13,
         BothEyesLacedInOneBlockRightEyeIsFirst = 14,
     };
-    AlphaMode { 
+    AlphaMode {
         None = 0,
         Present = 1,
     };
-    OldStereoMode { 
+    OldStereoMode {
         Mono = 0,
         RightEye = 1,
         LeftEye = 2,
         BothEyes = 3,
     };
-    DisplayUnit { 
+    DisplayUnit {
         Pixels = 0,
         Centimeters = 1,
         Inches = 2,
         DisplayAspectRatio = 3,
         Unknown = 4,
     };
-    AspectRatioType { 
+    AspectRatioType {
         FreeResizing = 0,
         KeepAspectRatio = 1,
         Fixed = 2,
     };
-    MatrixCoefficients { 
+    MatrixCoefficients {
         Identity = 0,
         ItuRBt709 = 1,
         Unspecified = 2,
@@ -89,23 +89,23 @@ ebml_enumerations! {
         ChromaDerivedConstantLuminance = 13,
         ItuRBt21000 = 14,
     };
-    ChromaSitingHorz { 
+    ChromaSitingHorz {
         Unspecified = 0,
         LeftCollocated = 1,
         Half = 2,
     };
-    ChromaSitingVert { 
+    ChromaSitingVert {
         Unspecified = 0,
         TopCollocated = 1,
         Half = 2,
     };
-    Range { 
+    Range {
         Unspecified = 0,
         BroadcastRange = 1,
         FullRangeNoClipping = 2,
         DefinedByMatrixCoefficientsTransferCharacteristics = 3,
     };
-    TransferCharacteristics { 
+    TransferCharacteristics {
         Reserved1 = 0,
         ItuRBt709 = 1,
         Unspecified = 2,
@@ -126,7 +126,7 @@ ebml_enumerations! {
         SmpteSt4281 = 17,
         AribStdB67Hlg = 18,
     };
-    Primaries { 
+    Primaries {
         Reserved1 = 0,
         ItuRBt709 = 1,
         Unspecified = 2,
@@ -142,33 +142,33 @@ ebml_enumerations! {
         SmpteEg4322 = 12,
         EbuTech3213EJedecP22Phosphors = 22,
     };
-    ProjectionType { 
+    ProjectionType {
         Rectangular = 0,
         Equirectangular = 1,
         Cubemap = 2,
         Mesh = 3,
     };
-    TrackPlaneType { 
+    TrackPlaneType {
         LeftEye = 0,
         RightEye = 1,
         Background = 2,
     };
-    ContentEncodingScope { 
+    ContentEncodingScope {
         Block = 1,
         Private = 2,
         Next = 4,
     };
-    ContentEncodingType { 
+    ContentEncodingType {
         Compression = 0,
         Encryption = 1,
     };
-    ContentCompAlgo { 
+    ContentCompAlgo {
         Zlib = 0,
         Bzlib = 1,
         Lzo1X = 2,
         HeaderStripping = 3,
     };
-    ContentEncAlgo { 
+    ContentEncAlgo {
         NotEncrypted = 0,
         Des = 1,
         TripleDes = 2,
@@ -176,25 +176,25 @@ ebml_enumerations! {
         Blowfish = 4,
         Aes = 5,
     };
-    AesSettingsCipherMode { 
+    AesSettingsCipherMode {
         AesCtr = 1,
         AesCbc = 2,
     };
-    ContentSigAlgo { 
+    ContentSigAlgo {
         NotSigned = 0,
         Rsa = 1,
     };
-    ContentSigHashAlgo { 
+    ContentSigHashAlgo {
         NotSigned = 0,
         Sha1160 = 1,
         Md5 = 2,
     };
-    ChapProcessTime { 
+    ChapProcessTime {
         DuringTheWholeChapter = 0,
         BeforeStartingPlayback = 1,
         AfterPlaybackOfTheChapter = 2,
     };
-    TargetTypeValue { 
+    TargetTypeValue {
         Collection = 70,
         EditionIssueVolumeOpusSeasonSequel = 60,
         AlbumOperaConcertMovieEpisode = 50,
@@ -202,5 +202,5 @@ ebml_enumerations! {
         TrackSongChapter = 30,
         SubtrackPartMovementScene = 20,
         Shot = 10,
-};
+    };
 }
