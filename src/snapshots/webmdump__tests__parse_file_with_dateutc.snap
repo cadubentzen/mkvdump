@@ -1,0 +1,323 @@
+---
+source: src/main.rs
+assertion_line: 886
+expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
+---
+- id: Ebml
+  header_size: 5
+  size: 40
+  children:
+    - id: EbmlVersion
+      header_size: 3
+      size: 4
+      value: 1
+    - id: EbmlReadVersion
+      header_size: 3
+      size: 4
+      value: 1
+    - id: EbmlMaxIdLength
+      header_size: 3
+      size: 4
+      value: 4
+    - id: EbmlMaxSizeLength
+      header_size: 3
+      size: 4
+      value: 8
+    - id: DocType
+      header_size: 3
+      size: 11
+      value: matroska
+    - id: DocTypeVersion
+      header_size: 3
+      size: 4
+      value: 4
+    - id: DocTypeReadVersion
+      header_size: 3
+      size: 4
+      value: 2
+- id: Segment
+  header_size: 12
+  size: 3859
+  children:
+    - id: SeekHead
+      header_size: 5
+      size: 70
+      children:
+        - id: Crc32
+          header_size: 2
+          size: 6
+          value: "[c4 b0 cf 83]"
+        - id: Seek
+          header_size: 3
+          size: 14
+          children:
+            - id: SeekId
+              header_size: 3
+              size: 7
+              value: Info
+            - id: SeekPosition
+              header_size: 3
+              size: 4
+              value: 229
+        - id: Seek
+          header_size: 3
+          size: 15
+          children:
+            - id: SeekId
+              header_size: 3
+              size: 7
+              value: Tracks
+            - id: SeekPosition
+              header_size: 3
+              size: 5
+              value: 320
+        - id: Seek
+          header_size: 3
+          size: 15
+          children:
+            - id: SeekId
+              header_size: 3
+              size: 7
+              value: Tags
+            - id: SeekPosition
+              header_size: 3
+              size: 5
+              value: 445
+        - id: Seek
+          header_size: 3
+          size: 15
+          children:
+            - id: SeekId
+              header_size: 3
+              size: 7
+              value: Cues
+            - id: SeekPosition
+              header_size: 3
+              size: 5
+              value: 3819
+    - id: Void
+      header_size: 9
+      size: 159
+      value: ~
+    - id: Info
+      header_size: 5
+      size: 91
+      children:
+        - id: Crc32
+          header_size: 2
+          size: 6
+          value: "[c9 1e b8 5d]"
+        - id: TimestampScale
+          header_size: 4
+          size: 7
+          value: 1000000
+        - id: MuxingApp
+          header_size: 3
+          size: 16
+          value: Lavf58.29.100
+        - id: WritingApp
+          header_size: 3
+          size: 16
+          value: Lavf58.29.100
+        - id: SegmentUuid
+          header_size: 3
+          size: 19
+          value: "[93 f3 31 4f b3 5e e7 a1 a4 db f2 52 90 f7 7c 2d]"
+        - id: DateUtc
+          header_size: 3
+          size: 11
+          value: "2022-08-11T08:27:15Z"
+        - id: Duration
+          header_size: 3
+          size: 11
+          value: 80
+    - id: Tracks
+      header_size: 5
+      size: 125
+      children:
+        - id: Crc32
+          header_size: 2
+          size: 6
+          value: "[e4 1f 42 9b]"
+        - id: TrackEntry
+          header_size: 9
+          size: 114
+          children:
+            - id: TrackNumber
+              header_size: 2
+              size: 3
+              value: 1
+            - id: TrackUid
+              header_size: 3
+              size: 4
+              value: 1
+            - id: FlagLacing
+              header_size: 2
+              size: 3
+              value: 0
+            - id: Language
+              header_size: 4
+              size: 7
+              value: und
+            - id: CodecId
+              header_size: 2
+              size: 17
+              value: V_MPEG4/ISO/AVC
+            - id: TrackType
+              header_size: 2
+              size: 3
+              value: Video
+            - id: DefaultDuration
+              header_size: 4
+              size: 8
+              value: 40000000
+            - id: Video
+              header_size: 9
+              size: 16
+              children:
+                - id: PixelWidth
+                  header_size: 2
+                  size: 4
+                  value: 320
+                - id: PixelHeight
+                  header_size: 2
+                  size: 3
+                  value: 240
+            - id: CodecPrivate
+              header_size: 3
+              size: 44
+              value: "[01 f4 00 0d ff e1 00 19 67 f4 00 0d 91 9b 28 28 3f 60 22 00 00 03 00 02 00 00 03 00 64 1e 28 53 2c 01 00 05 68 eb e3 c4 48]"
+    - id: Tags
+      header_size: 6
+      size: 204
+      children:
+        - id: Crc32
+          header_size: 2
+          size: 6
+          value: "[85 0b 7d 15]"
+        - id: Tag
+          header_size: 10
+          size: 56
+          children:
+            - id: Targets
+              header_size: 10
+              size: 10
+              children: []
+            - id: SimpleTag
+              header_size: 10
+              size: 36
+              children:
+                - id: TagName
+                  header_size: 3
+                  size: 10
+                  value: ENCODER
+                - id: TagString
+                  header_size: 3
+                  size: 16
+                  value: Lavf58.29.100
+        - id: Tag
+          header_size: 10
+          size: 68
+          children:
+            - id: Targets
+              header_size: 10
+              size: 14
+              children:
+                - id: TagTrackUid
+                  header_size: 3
+                  size: 4
+                  value: 1
+            - id: SimpleTag
+              header_size: 10
+              size: 44
+              children:
+                - id: TagName
+                  header_size: 3
+                  size: 10
+                  value: ENCODER
+                - id: TagString
+                  header_size: 3
+                  size: 24
+                  value: Lavc58.54.100 libx264
+        - id: Tag
+          header_size: 10
+          size: 68
+          children:
+            - id: Targets
+              header_size: 10
+              size: 14
+              children:
+                - id: TagTrackUid
+                  header_size: 3
+                  size: 4
+                  value: 1
+            - id: SimpleTag
+              header_size: 10
+              size: 44
+              children:
+                - id: TagName
+                  header_size: 3
+                  size: 11
+                  value: DURATION
+                - id: TagString
+                  header_size: 3
+                  size: 23
+                  value: "00:00:00.080000000"
+    - id: Cluster
+      header_size: 6
+      size: 3170
+      children:
+        - id: Crc32
+          header_size: 2
+          size: 6
+          value: "[81 99 ab 1f]"
+        - id: Timestamp
+          header_size: 2
+          size: 3
+          value: 0
+        - id: SimpleBlock
+          header_size: 3
+          size: 2857
+          value:
+            track_number: 1
+            timestamp: 0
+            keyframe: true
+        - id: SimpleBlock
+          header_size: 3
+          size: 298
+          value:
+            track_number: 1
+            timestamp: 40
+    - id: Cues
+      header_size: 5
+      size: 28
+      children:
+        - id: Crc32
+          header_size: 2
+          size: 6
+          value: "[92 28 61 ef]"
+        - id: CuePoint
+          header_size: 2
+          size: 17
+          children:
+            - id: CueTime
+              header_size: 2
+              size: 3
+              value: 0
+            - id: CueTrackPositions
+              header_size: 2
+              size: 12
+              children:
+                - id: CueTrack
+                  header_size: 2
+                  size: 3
+                  value: 1
+                - id: CueClusterPosition
+                  header_size: 2
+                  size: 4
+                  value: 649
+                - id: CueRelativePosition
+                  header_size: 2
+                  size: 3
+                  value: 9
+

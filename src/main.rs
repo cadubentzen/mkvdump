@@ -4,6 +4,7 @@ use std::{
     io::{self, Read},
 };
 
+use chrono::prelude::*;
 use clap::Parser;
 use nom::{
     bytes::streaming::take,
@@ -210,7 +211,7 @@ enum Body {
     Float(f64),
     String(String),
     Utf8(String),
-    Date(i64),
+    Date(DateTime<Utc>),
     Binary(BinaryValue),
 }
 
@@ -240,7 +241,7 @@ fn parse_element(input: &[u8]) -> IResult<&[u8], Element> {
             parse_string(&header, input).map(|(input, value)| (input, Body::String(value)))
         }
         Type::Utf8 => parse_string(&header, input).map(|(input, value)| (input, Body::Utf8(value))),
-        Type::Date => todo!(),
+        Type::Date => parse_date(&header, input).map(|(input, value)| (input, Body::Date(value))),
         Type::Binary => parse_binary(&header, input).map(|(input, value)| {
             let binary_value = match header.id {
                 Id::SeekId => BinaryValue::SeekId(parse_id(&value).unwrap().1),
@@ -273,6 +274,21 @@ fn parse_binary<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], Vec
     let value = Vec::from(bytes);
 
     Ok((input, value))
+}
+
+fn parse_date<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], DateTime<Utc>> {
+    let (input, timestamp_nanos_to_2001) = parse_int::<i64>(metadata, input)?;
+    let nanos_2001 = NaiveDate::from_ymd(2001, 1, 1)
+        .and_hms(0, 0, 0)
+        .timestamp_nanos();
+    let timestamp_seconds_to_1970 = (timestamp_nanos_to_2001 + nanos_2001) / 1_000_000_000;
+    Ok((
+        input,
+        DateTime::<Utc>::from_utc(
+            NaiveDateTime::from_timestamp(timestamp_seconds_to_1970, 0),
+            Utc,
+        ),
+    ))
 }
 
 trait Integer64FromBigEndianBytes {
@@ -604,6 +620,19 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_date() {
+        let expected_datetime =
+            DateTime::<Utc>::from_utc(NaiveDate::from_ymd(2022, 8, 11).and_hms(8, 27, 15), Utc);
+        assert_eq!(
+            parse_date(
+                &Header::new(Id::DateUtc, 1, 8),
+                &[0x09, 0x76, 0x97, 0xbd, 0xca, 0xc9, 0x1e, 0x00]
+            ),
+            Ok((EMPTY, expected_datetime))
+        )
+    }
+
+    #[test]
     fn test_parse_master_element() {
         const INPUT: &[u8] = &[
             0x1A, 0x45, 0xDF, 0xA3, 0x9F, 0x42, 0x86, 0x81, 0x01, 0x42, 0xF7, 0x81, 0x01, 0x42,
@@ -848,6 +877,13 @@ mod tests {
         insta::assert_yaml_snapshot!(parse_buffer_to_end(include_bytes!(
             "../inputs/encrypted.hdr"
         )));
+    }
+
+    #[test]
+    fn test_parse_file_with_dateutc() {
+        // File was generated with:
+        // ffmpeg -f lavfi -i testsrc -c:v libx264 -frames:v 2 -metadata creation_time="2022-08-11T08:27:15Z" -f matroska test.mkv
+        insta::assert_yaml_snapshot!(parse_buffer_to_end(include_bytes!("../inputs/dateutc.mkv")));
     }
 }
 
