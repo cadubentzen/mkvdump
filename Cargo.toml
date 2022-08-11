@@ -22,3 +22,6 @@ insta = { version = "1.18.1", features = ["yaml"] }
 
 [profile.release]
 strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
