@@ -29,6 +29,7 @@ fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
 
     // IDs can only have up to 4 bytes
     if num_bytes > 4 {
+        println!("found ID with more than 4 bytes");
         return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
     }
 
@@ -500,7 +501,13 @@ fn parse_buffer_to_end(input: &[u8]) -> Vec<ElementTree> {
                 }
                 read_buffer = new_read_buffer;
             }
-            _ => panic!("Something is wrong"),
+            _ => {
+                println!("skipping one byte");
+                read_buffer = &read_buffer[1..];
+                if read_buffer.is_empty() {
+                    break;
+                }
+            }
         }
     }
     build_element_trees(&elements)
