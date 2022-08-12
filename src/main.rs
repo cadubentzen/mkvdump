@@ -458,6 +458,13 @@ fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
                 while size_remaining > 0 {
                     index += 1;
                     if let Some(next_child) = elements.get(index) {
+                        // Hack before building tree using XML paths (#13):
+                        // a Cluster can't be parent of another Cluster
+                        if element.header.id == Id::Cluster && next_child.header.id == Id::Cluster {
+                            index -= 1;
+                            break;
+                        }
+
                         size_remaining -= if let Body::Master = next_child.body {
                             // Master elements' body size should not count in the recursion
                             // as the children would duplicate the size count, so
@@ -895,7 +902,7 @@ mod tests {
     snapshot_test!(test1, "../inputs/matroska-test-suite/test1.mkv");
     snapshot_test!(test2, "../inputs/matroska-test-suite/test2.mkv");
     snapshot_test!(test3, "../inputs/matroska-test-suite/test3.mkv");
-    // snapshot_test!(test4, "../inputs/matroska-test-suite/test4.mkv");
+    snapshot_test!(test4, "../inputs/matroska-test-suite/test4.mkv");
     snapshot_test!(test5, "../inputs/matroska-test-suite/test5.mkv");
     snapshot_test!(test6, "../inputs/matroska-test-suite/test6.mkv");
     // snapshot_test!(test7, "../inputs/matroska-test-suite/test7.mkv");
