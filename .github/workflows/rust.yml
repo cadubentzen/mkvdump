@@ -16,9 +16,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Install Insta
-      run: cargo install cargo-insta
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo insta test --no-quiet
+
+    - name: Run cargo-tarpaulin
+      uses: actions-rs/tarpaulin@v0.1
+
+    - name: Upload to codecov.io
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{secrets.CODECOV_TOKEN}}
