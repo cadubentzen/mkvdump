@@ -2,11 +2,7 @@
 
 import subprocess
 import shutil
-
-TARGETS = [
-    "x86_64-unknown-linux-musl",
-    "aarch64-unknown-linux-musl",
-]
+import sys
 
 
 def run(command: str):
@@ -15,17 +11,18 @@ def run(command: str):
 
 
 def main():
+    if len(sys.argv) != 2:
+        print("usage: ./build-cross.py <target>")
+        sys.exit(1)
+
+    target = sys.argv[1]
+    arch = target.split("-")[0]
+
     run("cargo install cross --git https://github.com/cross-rs/cross")
+    run(f"cross test --release --target {target}")
+    run(f"cross build --release --target {target}")
 
-    for target in TARGETS:
-        run(f"cross test --release --target {target}")
-
-    for target in TARGETS:
-        run(f"cross build --release --target {target}")
-
-    for target in TARGETS:
-        arch = target.split("-")[0]
-        shutil.copyfile(f"target/{target}/release/mkvdump", f"mkvdump-{arch}")
+    shutil.copyfile(f"target/{target}/release/mkvdump", f"mkvdump-{arch}")
 
 
 if __name__ == "__main__":

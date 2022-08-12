@@ -1,8 +1,7 @@
 FROM alpine AS staging
 
 WORKDIR /staging
-ADD mkvdump-x86_64 .
-ADD mkvdump-aarch64 .
+ADD mkvdump-* .
 RUN cp mkvdump-$(uname -m) /usr/local/bin/mkvdump
 RUN chmod +x /usr/local/bin/mkvdump
 
