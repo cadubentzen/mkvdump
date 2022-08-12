@@ -1,19 +1,13 @@
-FROM rust AS builder
+FROM alpine AS staging
 
-WORKDIR /build
-RUN rustup target add $(uname -m)-unknown-linux-musl
-
-ADD . .
-
-# Run tests
-RUN cargo test --release --target $(uname -m)-unknown-linux-musl
-
-# Build release
-RUN cargo build --release --target $(uname -m)-unknown-linux-musl
-RUN cp target/$(uname -m)-unknown-linux-musl/release/mkvdump /usr/local/bin/mkvdump
+WORKDIR /staging
+ADD mkvdump-x86_64 .
+ADD mkvdump-aarch64 .
+RUN cp mkvdump-$(uname -m) /usr/local/bin/mkvdump
+RUN chmod +x /usr/local/bin/mkvdump
 
 FROM alpine
 
-COPY --from=builder /usr/local/bin/mkvdump /usr/local/bin/
+COPY --from=staging /usr/local/bin/mkvdump /usr/local/bin/
 
 ENTRYPOINT ["mkvdump"]
