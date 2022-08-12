@@ -925,7 +925,7 @@ fn main() -> io::Result<()> {
     let args = Args::parse();
     let mut file = File::open(args.filename)?;
 
-    // TODO: read chunked to not load entire video in memory.
+    // TODO(#8): read chunked to not load entire file in memory.
     let mut buffer = Vec::<u8>::new();
     file.read_to_end(&mut buffer)?;
 
