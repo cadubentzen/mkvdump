@@ -1,7 +1,7 @@
 ---
 source: src/main.rs
-assertion_line: 886
-expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
+assertion_line: 869
+expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
 ---
 - id: Ebml
   header_size: 5
@@ -37,7 +37,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
       value: 2
 - id: Segment
   header_size: 12
-  size: 3859
+  size: 6618
   children:
     - id: SeekHead
       header_size: 5
@@ -46,7 +46,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
         - id: Crc32
           header_size: 2
           size: 6
-          value: "[c4 b0 cf 83]"
+          value: "[c7 c3 2b 17]"
         - id: Seek
           header_size: 3
           size: 14
@@ -70,7 +70,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
             - id: SeekPosition
               header_size: 3
               size: 5
-              value: 320
+              value: 272
         - id: Seek
           header_size: 3
           size: 15
@@ -82,7 +82,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
             - id: SeekPosition
               header_size: 3
               size: 5
-              value: 445
+              value: 343
         - id: Seek
           header_size: 3
           size: 15
@@ -94,54 +94,46 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
             - id: SeekPosition
               header_size: 3
               size: 5
-              value: 3819
+              value: 6560
     - id: Void
       header_size: 9
       size: 159
       value: ~
     - id: Info
       header_size: 5
-      size: 91
+      size: 43
       children:
         - id: Crc32
           header_size: 2
           size: 6
-          value: "[c9 1e b8 5d]"
+          value: "[8e 09 74 4b]"
         - id: TimestampScale
           header_size: 4
           size: 7
           value: 1000000
         - id: MuxingApp
           header_size: 3
-          size: 16
-          value: Lavf58.29.100
+          size: 7
+          value: Lavf
         - id: WritingApp
           header_size: 3
-          size: 16
-          value: Lavf58.29.100
-        - id: SegmentUuid
-          header_size: 3
-          size: 19
-          value: "[93 f3 31 4f b3 5e e7 a1 a4 db f2 52 90 f7 7c 2d]"
-        - id: DateUtc
-          header_size: 3
-          size: 11
-          value: "2022-08-11T08:27:15Z"
+          size: 7
+          value: Lavf
         - id: Duration
           header_size: 3
           size: 11
-          value: 80
+          value: 10000
     - id: Tracks
       header_size: 5
-      size: 125
+      size: 71
       children:
         - id: Crc32
           header_size: 2
           size: 6
-          value: "[e4 1f 42 9b]"
+          value: "[9f 90 75 5f]"
         - id: TrackEntry
           header_size: 9
-          size: 114
+          size: 60
           children:
             - id: TrackNumber
               header_size: 2
@@ -161,8 +153,8 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
               value: und
             - id: CodecId
               header_size: 2
-              size: 17
-              value: V_MPEG4/ISO/AVC
+              size: 7
+              value: V_VP9
             - id: TrackType
               header_size: 2
               size: 3
@@ -178,46 +170,22 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
                 - id: PixelWidth
                   header_size: 2
                   size: 4
-                  value: 320
+                  value: 360
                 - id: PixelHeight
                   header_size: 2
                   size: 3
                   value: 240
-            - id: CodecPrivate
-              header_size: 3
-              size: 44
-              value: "[01 f4 00 0d ff e1 00 19 67 f4 00 0d 91 9b 28 28 3f 60 22 00 00 03 00 02 00 00 03 00 64 1e 28 53 2c 01 00 05 68 eb e3 c4 48]"
     - id: Tags
       header_size: 6
-      size: 204
+      size: 142
       children:
         - id: Crc32
           header_size: 2
           size: 6
-          value: "[85 0b 7d 15]"
+          value: "[19 f8 55 eb]"
         - id: Tag
           header_size: 10
-          size: 56
-          children:
-            - id: Targets
-              header_size: 10
-              size: 10
-              children: []
-            - id: SimpleTag
-              header_size: 10
-              size: 36
-              children:
-                - id: TagName
-                  header_size: 3
-                  size: 10
-                  value: ENCODER
-                - id: TagString
-                  header_size: 3
-                  size: 16
-                  value: Lavf58.29.100
-        - id: Tag
-          header_size: 10
-          size: 68
+          size: 62
           children:
             - id: Targets
               header_size: 10
@@ -229,7 +197,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
                   value: 1
             - id: SimpleTag
               header_size: 10
-              size: 44
+              size: 38
               children:
                 - id: TagName
                   header_size: 3
@@ -237,8 +205,8 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
                   value: ENCODER
                 - id: TagString
                   header_size: 3
-                  size: 24
-                  value: Lavc58.54.100 libx264
+                  size: 18
+                  value: Lavc libvpx-vp9
         - id: Tag
           header_size: 10
           size: 68
@@ -262,62 +230,5 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
                 - id: TagString
                   header_size: 3
                   size: 23
-                  value: "00:00:00.080000000"
-    - id: Cluster
-      header_size: 6
-      size: 3170
-      children:
-        - id: Crc32
-          header_size: 2
-          size: 6
-          value: "[81 99 ab 1f]"
-        - id: Timestamp
-          header_size: 2
-          size: 3
-          value: 0
-        - id: SimpleBlock
-          header_size: 3
-          size: 2857
-          value:
-            track_number: 1
-            timestamp: 0
-            keyframe: true
-        - id: SimpleBlock
-          header_size: 3
-          size: 298
-          value:
-            track_number: 1
-            timestamp: 40
-    - id: Cues
-      header_size: 5
-      size: 28
-      children:
-        - id: Crc32
-          header_size: 2
-          size: 6
-          value: "[92 28 61 ef]"
-        - id: CuePoint
-          header_size: 2
-          size: 17
-          children:
-            - id: CueTime
-              header_size: 2
-              size: 3
-              value: 0
-            - id: CueTrackPositions
-              header_size: 2
-              size: 12
-              children:
-                - id: CueTrack
-                  header_size: 2
-                  size: 3
-                  value: 1
-                - id: CueClusterPosition
-                  header_size: 2
-                  size: 4
-                  value: 649
-                - id: CueRelativePosition
-                  header_size: 2
-                  size: 3
-                  value: 9
+                  value: "00:00:10.000000000"
 

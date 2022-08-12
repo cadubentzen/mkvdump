@@ -1,6 +1,6 @@
 ---
 source: src/main.rs
-assertion_line: 843
+assertion_line: 876
 expression: "parse_buffer_to_end(include_bytes!(\"../inputs/encrypted.hdr\"))"
 ---
 - id: Ebml
