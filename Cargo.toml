@@ -1,5 +1,5 @@
 [package]
-name = "webmdump"
+name = "mkvdump"
 version = "0.1.0"
 edition = "2021"
 
