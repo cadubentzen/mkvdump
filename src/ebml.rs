@@ -44,14 +44,17 @@ macro_rules! ebml_elements {
 }
 
 macro_rules! ebml_enumerations {
-    ($($id:ident { $($variant:ident = $value:expr,)+ };)+) => {
+    ($($id:ident { $($variant:ident = $value:expr, original_label = $original_label:expr;)+ };)+) => {
         use crate::elements::Id;
         use serde::Serialize;
 
         $(
             #[derive(Debug, PartialEq, Clone, Serialize)]
             pub(crate) enum $id {
-                $($variant,)+
+                $(
+                    #[serde(rename = $original_label)]
+                    $variant,
+                )+
             }
 
             impl $id {

@@ -166,7 +166,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
             - id: TrackType
               header_size: 2
               size: 3
-              value: Video
+              value: video
             - id: DefaultDuration
               header_size: 4
               size: 8

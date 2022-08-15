@@ -868,7 +868,7 @@ mod tests {
             serde_yaml::to_string(&Enumeration::TrackType(TrackType::Video))
                 .unwrap()
                 .trim(),
-            "Video"
+            "video"
         );
         assert_eq!(
             serde_yaml::to_string(&Enumeration::Unknown(5u64))

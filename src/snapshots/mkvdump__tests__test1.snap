@@ -114,7 +114,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
             - id: TrackType
               header_size: 2
               size: 3
-              value: Video
+              value: video
             - id: CodecID
               header_size: 2
               size: 17
@@ -166,7 +166,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
             - id: TrackType
               header_size: 2
               size: 3
-              value: Audio
+              value: audio
             - id: CodecID
               header_size: 2
               size: 11

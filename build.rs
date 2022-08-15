@@ -175,11 +175,11 @@ fn create_enumerations_file(elements: &[Element]) -> std::io::Result<()> {
                 if let ElementDetail::Restriction(restriction) = detail {
                     writeln!(file, "    {} {{", enum_name)?;
                     for enumeration in &restriction.enums {
+                        let label = apply_label_quirks(&enumeration.label, &mut reserved_index);
                         writeln!(
                             file,
-                            "        {} = {},",
-                            apply_label_quirks(&enumeration.label, &mut reserved_index),
-                            enumeration.value
+                            "        {} = {}, original_label = \"{}\";",
+                            label, enumeration.value, enumeration.label
                         )?;
                     }
                     writeln!(file, "    }};")?;
