@@ -898,7 +898,7 @@ mod tests {
     snapshot_test!(test_parse_file_with_dateutc, "../inputs/dateutc.mkv");
 
     // Tests from Matroska test suite
-    // TODO(#25): fix tests for files 4 and 7
+    // TODO(#25): fix tests for file 7
     snapshot_test!(test1, "../inputs/matroska-test-suite/test1.mkv");
     snapshot_test!(test2, "../inputs/matroska-test-suite/test2.mkv");
     snapshot_test!(test3, "../inputs/matroska-test-suite/test3.mkv");
