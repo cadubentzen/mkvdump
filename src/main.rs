@@ -70,7 +70,7 @@ impl Header {
         }
     }
 
-    fn with_uknown_size(id: Id, header_size: usize) -> Self {
+    fn with_unknown_size(id: Id, header_size: usize) -> Self {
         Self {
             id,
             header_size,
@@ -133,7 +133,7 @@ fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
     let header = if let Some(body_size) = body_size {
         Header::new(id, header_size, body_size)
     } else {
-        Header::with_uknown_size(id, header_size)
+        Header::with_unknown_size(id, header_size)
     };
 
     Ok((input, header))
