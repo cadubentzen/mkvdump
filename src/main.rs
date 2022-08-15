@@ -572,10 +572,7 @@ mod tests {
         // Unknown ID
         let (remaining, id) = parse_id(&[0x19, 0xAB, 0xCD, 0xEF]).unwrap();
         assert_eq!((remaining, &id), (EMPTY, &Id::Unknown(0x19ABCDEF)));
-        assert_eq!(
-            serde_yaml::to_string(&id).unwrap().trim(),
-            "Unknown (0x19ABCDEF)"
-        );
+        assert_eq!(serde_yaml::to_string(&id).unwrap().trim(), "0x19ABCDEF");
     }
 
     #[test]

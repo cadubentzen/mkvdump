@@ -47,7 +47,7 @@ macro_rules! ebml_elements {
             fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 match *self {
                     $(Id::$element_name => s.serialize_str($original_name),)+
-                    Id::Unknown(value) => s.serialize_str(&format!("Unknown (0x{:X})", value))
+                    Id::Unknown(value) => s.serialize_str(&format!("0x{:X}", value))
                 }
             }
         }
