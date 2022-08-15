@@ -556,23 +556,12 @@ fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
 pub fn parse_buffer_to_end(input: &[u8]) -> Vec<ElementTree> {
     let mut elements = Vec::<Element>::new();
     let mut read_buffer = input;
-    loop {
-        match parse_element(read_buffer) {
-            Ok((new_read_buffer, element)) => {
-                elements.push(element);
-                if new_read_buffer.is_empty() {
-                    break;
-                }
-                read_buffer = new_read_buffer;
-            }
-            _ => {
-                eprintln!("skipping one byte");
-                read_buffer = &read_buffer[1..];
-                if read_buffer.is_empty() {
-                    break;
-                }
-            }
+    while let Ok((new_read_buffer, element)) = parse_element(read_buffer) {
+        elements.push(element);
+        if new_read_buffer.is_empty() {
+            break;
         }
+        read_buffer = new_read_buffer;
     }
     build_element_trees(&elements)
 }
