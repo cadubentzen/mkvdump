@@ -1,24 +1,25 @@
 ---
 source: src/main.rs
+assertion_line: 906
 expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/test5.mkv\"))"
 ---
-- id: Ebml
+- id: EBML
   header_size: 5
   size: 40
   children:
-    - id: EbmlVersion
+    - id: EBMLVersion
       header_size: 3
       size: 4
       value: 1
-    - id: EbmlReadVersion
+    - id: EBMLReadVersion
       header_size: 3
       size: 4
       value: 1
-    - id: EbmlMaxIdLength
+    - id: EBMLMaxIDLength
       header_size: 3
       size: 4
       value: 4
-    - id: EbmlMaxSizeLength
+    - id: EBMLMaxSizeLength
       header_size: 3
       size: 4
       value: 8
@@ -46,7 +47,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 15
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Info
@@ -58,7 +59,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 15
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Tracks
@@ -70,7 +71,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 17
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Cues
@@ -82,7 +83,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 17
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Tags
@@ -114,11 +115,11 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 7
           value: 46665
-        - id: DateUtc
+        - id: DateUTC
           header_size: 3
           size: 11
           value: "2010-08-21T18:06:43Z"
-        - id: SegmentUuid
+        - id: SegmentUUID
           header_size: 3
           size: 19
           value: "[9d 51 6a 0f 92 7a 12 d2 86 e1 50 2d 23 d0 fd b0]"
@@ -134,7 +135,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 1
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 1258329745
@@ -150,7 +151,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 3
               size: 4
               value: 1
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 17
               value: V_MPEG4/ISO/AVC
@@ -194,7 +195,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 2
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 3452711582
@@ -202,7 +203,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: Audio
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 7
               value: A_AAC
@@ -238,7 +239,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 3
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 368310685
@@ -250,7 +251,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 0
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 13
               value: S_TEXT/UTF8
@@ -262,7 +263,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 4
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 77489046
@@ -278,7 +279,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 0
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 13
               value: S_TEXT/UTF8
@@ -294,7 +295,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 5
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 3554194305
@@ -310,7 +311,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 0
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 13
               value: S_TEXT/UTF8
@@ -326,7 +327,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 6
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 3601783439
@@ -342,7 +343,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 0
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 13
               value: S_TEXT/UTF8
@@ -358,7 +359,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 8
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 637820071
@@ -374,7 +375,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 0
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 13
               value: S_TEXT/UTF8
@@ -390,7 +391,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 9
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 2328328329
@@ -406,7 +407,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 0
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 13
               value: S_TEXT/UTF8
@@ -422,7 +423,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 10
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 215750297
@@ -434,7 +435,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 0
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 7
               value: A_AAC
@@ -470,7 +471,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 11
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 652628868
@@ -486,7 +487,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 0
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 13
               value: S_TEXT/UTF8
@@ -502,7 +503,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 7
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 131186099
@@ -518,7 +519,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: 0
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 13
               value: S_TEXT/UTF8

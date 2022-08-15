@@ -1,25 +1,25 @@
 ---
 source: src/main.rs
-assertion_line: 885
+assertion_line: 898
 expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
 ---
-- id: Ebml
+- id: EBML
   header_size: 5
   size: 40
   children:
-    - id: EbmlVersion
+    - id: EBMLVersion
       header_size: 3
       size: 4
       value: 1
-    - id: EbmlReadVersion
+    - id: EBMLReadVersion
       header_size: 3
       size: 4
       value: 1
-    - id: EbmlMaxIdLength
+    - id: EBMLMaxIDLength
       header_size: 3
       size: 4
       value: 4
-    - id: EbmlMaxSizeLength
+    - id: EBMLMaxSizeLength
       header_size: 3
       size: 4
       value: 8
@@ -43,7 +43,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
       header_size: 5
       size: 70
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[c4 b0 cf 83]"
@@ -51,7 +51,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
           header_size: 3
           size: 14
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Info
@@ -63,7 +63,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
           header_size: 3
           size: 15
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Tracks
@@ -75,7 +75,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
           header_size: 3
           size: 15
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Tags
@@ -87,7 +87,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
           header_size: 3
           size: 15
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Cues
@@ -103,7 +103,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
       header_size: 5
       size: 91
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[c9 1e b8 5d]"
@@ -119,11 +119,11 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
           header_size: 3
           size: 16
           value: Lavf58.29.100
-        - id: SegmentUuid
+        - id: SegmentUUID
           header_size: 3
           size: 19
           value: "[93 f3 31 4f b3 5e e7 a1 a4 db f2 52 90 f7 7c 2d]"
-        - id: DateUtc
+        - id: DateUTC
           header_size: 3
           size: 11
           value: "2022-08-11T08:27:15Z"
@@ -135,7 +135,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
       header_size: 5
       size: 125
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[e4 1f 42 9b]"
@@ -147,7 +147,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
               header_size: 2
               size: 3
               value: 1
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 4
               value: 1
@@ -159,7 +159,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
               header_size: 4
               size: 7
               value: und
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 17
               value: V_MPEG4/ISO/AVC
@@ -191,7 +191,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
       header_size: 6
       size: 204
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[85 0b 7d 15]"
@@ -223,7 +223,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
               header_size: 10
               size: 14
               children:
-                - id: TagTrackUid
+                - id: TagTrackUID
                   header_size: 3
                   size: 4
                   value: 1
@@ -247,7 +247,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
               header_size: 10
               size: 14
               children:
-                - id: TagTrackUid
+                - id: TagTrackUID
                   header_size: 3
                   size: 4
                   value: 1
@@ -267,7 +267,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
       header_size: 6
       size: 3170
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[81 99 ab 1f]"
@@ -292,7 +292,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/dateutc.mkv\"))"
       header_size: 5
       size: 28
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[92 28 61 ef]"

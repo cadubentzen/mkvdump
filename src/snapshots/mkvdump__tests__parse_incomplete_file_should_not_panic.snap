@@ -1,25 +1,25 @@
 ---
 source: src/main.rs
-assertion_line: 869
+assertion_line: 890
 expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
 ---
-- id: Ebml
+- id: EBML
   header_size: 5
   size: 40
   children:
-    - id: EbmlVersion
+    - id: EBMLVersion
       header_size: 3
       size: 4
       value: 1
-    - id: EbmlReadVersion
+    - id: EBMLReadVersion
       header_size: 3
       size: 4
       value: 1
-    - id: EbmlMaxIdLength
+    - id: EBMLMaxIDLength
       header_size: 3
       size: 4
       value: 4
-    - id: EbmlMaxSizeLength
+    - id: EBMLMaxSizeLength
       header_size: 3
       size: 4
       value: 8
@@ -43,7 +43,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
       header_size: 5
       size: 70
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[c7 c3 2b 17]"
@@ -51,7 +51,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
           header_size: 3
           size: 14
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Info
@@ -63,7 +63,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
           header_size: 3
           size: 15
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Tracks
@@ -75,7 +75,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
           header_size: 3
           size: 15
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Tags
@@ -87,7 +87,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
           header_size: 3
           size: 15
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Cues
@@ -103,7 +103,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
       header_size: 5
       size: 43
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[8e 09 74 4b]"
@@ -127,7 +127,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
       header_size: 5
       size: 71
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[9f 90 75 5f]"
@@ -139,7 +139,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
               header_size: 2
               size: 3
               value: 1
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 4
               value: 1
@@ -151,7 +151,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
               header_size: 4
               size: 7
               value: und
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 7
               value: V_VP9
@@ -179,7 +179,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
       header_size: 6
       size: 142
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[19 f8 55 eb]"
@@ -191,7 +191,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
               header_size: 10
               size: 14
               children:
-                - id: TagTrackUid
+                - id: TagTrackUID
                   header_size: 3
                   size: 4
                   value: 1
@@ -215,7 +215,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
               header_size: 10
               size: 14
               children:
-                - id: TagTrackUid
+                - id: TagTrackUID
                   header_size: 3
                   size: 4
                   value: 1

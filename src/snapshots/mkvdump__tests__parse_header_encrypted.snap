@@ -1,25 +1,25 @@
 ---
 source: src/main.rs
-assertion_line: 876
+assertion_line: 894
 expression: "parse_buffer_to_end(include_bytes!(\"../inputs/encrypted.hdr\"))"
 ---
-- id: Ebml
+- id: EBML
   header_size: 5
   size: 36
   children:
-    - id: EbmlVersion
+    - id: EBMLVersion
       header_size: 3
       size: 4
       value: 1
-    - id: EbmlReadVersion
+    - id: EBMLReadVersion
       header_size: 3
       size: 4
       value: 1
-    - id: EbmlMaxIdLength
+    - id: EBMLMaxIDLength
       header_size: 3
       size: 4
       value: 4
-    - id: EbmlMaxSizeLength
+    - id: EBMLMaxSizeLength
       header_size: 3
       size: 4
       value: 8
@@ -71,7 +71,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/encrypted.hdr\"))"
               header_size: 2
               size: 3
               value: 1
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 4
               value: 1
@@ -79,7 +79,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/encrypted.hdr\"))"
               header_size: 2
               size: 3
               value: Video
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 7
               value: V_VP9
@@ -115,15 +115,15 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/encrypted.hdr\"))"
                           header_size: 3
                           size: 4
                           value: Aes
-                        - id: ContentEncKeyId
+                        - id: ContentEncKeyID
                           header_size: 3
                           size: 19
                           value: "[eb 67 6a bb cb 34 5e 96 bb cf 61 66 30 f1 a3 da]"
-                        - id: ContentEncAesSettings
+                        - id: ContentEncAESSettings
                           header_size: 3
                           size: 7
                           children:
-                            - id: AesSettingsCipherMode
+                            - id: AESSettingsCipherMode
                               header_size: 3
                               size: 4
                               value: AesCtr

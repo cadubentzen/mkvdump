@@ -85,7 +85,6 @@ fn get_elements() -> Vec<Element> {
 
     // Pre-format names and variants
     elements.iter_mut().for_each(|e| {
-        e.name = e.name.to_case(Case::Pascal);
         e.variant = variant_to_enum_literal(&e.variant).to_string();
     });
 
@@ -135,11 +134,18 @@ fn create_elements_file(elements: &[Element]) -> std::io::Result<()> {
     writeln!(file, "use crate::ebml::ebml_elements;")?;
     writeln!(file, "ebml_elements! {{")?;
 
-    for element in elements {
+    for Element {
+        name,
+        id,
+        variant,
+        path: _,
+        details: _,
+    } in elements
+    {
+        let enum_name = name.to_case(Case::Pascal);
         writeln!(
             file,
-            "    name = {}, id = {}, variant = {};",
-            element.name, element.id, element.variant
+            "    name = {enum_name}, original_name = \"{name}\", id = {id}, variant = {variant};"
         )?;
     }
     writeln!(file, "}}")?;
@@ -163,10 +169,11 @@ fn create_enumerations_file(elements: &[Element]) -> std::io::Result<()> {
         if element.variant != "Unsigned" {
             continue;
         }
+        let enum_name = element.name.to_case(Case::Pascal);
         if let Some(details) = &element.details {
             for detail in details {
                 if let ElementDetail::Restriction(restriction) = detail {
-                    writeln!(file, "    {} {{", element.name)?;
+                    writeln!(file, "    {} {{", enum_name)?;
                     for enumeration in &restriction.enums {
                         writeln!(
                             file,

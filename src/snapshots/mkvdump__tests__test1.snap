@@ -1,8 +1,9 @@
 ---
 source: src/main.rs
+assertion_line: 902
 expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/test1.mkv\"))"
 ---
-- id: Ebml
+- id: EBML
   header_size: 5
   size: 24
   children:
@@ -30,7 +31,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 14
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Info
@@ -42,7 +43,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 15
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Tracks
@@ -54,7 +55,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 15
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Tags
@@ -66,7 +67,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 15
           children:
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Cues
@@ -90,11 +91,11 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 126
           value: "mkclean 0.5.5 ru from libebml v1.0.0 + libmatroska v1.0.0 + mkvmerge v4.1.1 ('Bouncin' Back') built on Jul  3 2010 22:54:08"
-        - id: DateUtc
+        - id: DateUTC
           header_size: 3
           size: 11
           value: "2010-08-21T07:23:03Z"
-        - id: SegmentUuid
+        - id: SegmentUUID
           header_size: 3
           size: 19
           value: "[92 2d 19 32 0f 1e 13 c5 b5 05 63 0a af d8 53 36]"
@@ -114,11 +115,11 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: Video
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 17
               value: V_MS/VFW/FOURCC
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 2422994868
@@ -166,11 +167,11 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: Audio
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 11
               value: A_MPEG/L3
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 3653291187

@@ -1,12 +1,13 @@
 ---
 source: src/main.rs
+assertion_line: 904
 expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/test3.mkv\"))"
 ---
-- id: Ebml
+- id: EBML
   header_size: 5
   size: 30
   children:
-    - id: Crc32
+    - id: CRC-32
       header_size: 2
       size: 6
       value: "[67 27 7b 3a]"
@@ -30,7 +31,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
       header_size: 5
       size: 94
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[ca c9 66 52]"
@@ -38,11 +39,11 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 20
           children:
-            - id: Crc32
+            - id: CRC-32
               header_size: 2
               size: 6
               value: "[33 b6 e2 8a]"
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Info
@@ -54,11 +55,11 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 21
           children:
-            - id: Crc32
+            - id: CRC-32
               header_size: 2
               size: 6
               value: "[8f 03 8a 4d]"
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Tracks
@@ -70,11 +71,11 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 21
           children:
-            - id: Crc32
+            - id: CRC-32
               header_size: 2
               size: 6
               value: "[24 ec 36 f7]"
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Tags
@@ -86,11 +87,11 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 21
           children:
-            - id: Crc32
+            - id: CRC-32
               header_size: 2
               size: 6
               value: "[3f 9f a3 5f]"
-            - id: SeekId
+            - id: SeekID
               header_size: 3
               size: 7
               value: Cues
@@ -102,7 +103,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
       header_size: 6
       size: 217
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[d2 77 7f 09]"
@@ -118,11 +119,11 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 3
           size: 126
           value: "mkclean 0.5.5 ro from libebml v1.0.0 + libmatroska v1.0.0 + mkvmerge v4.1.1 ('Bouncin' Back') built on Jul  3 2010 22:54:08"
-        - id: DateUtc
+        - id: DateUTC
           header_size: 3
           size: 11
           value: "2010-08-21T21:43:25Z"
-        - id: SegmentUuid
+        - id: SegmentUUID
           header_size: 3
           size: 19
           value: "[99 49 95 82 df af 06 d4 a6 76 d2 e6 4c 02 a5 07]"
@@ -130,7 +131,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
       header_size: 6
       size: 207
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[ff 31 c5 84]"
@@ -138,7 +139,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 2
           size: 126
           children:
-            - id: Crc32
+            - id: CRC-32
               header_size: 2
               size: 6
               value: "[26 21 ab 68]"
@@ -150,11 +151,11 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: Video
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 17
               value: V_MPEG4/ISO/AVC
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 3927961528
@@ -214,7 +215,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
           header_size: 2
           size: 69
           children:
-            - id: Crc32
+            - id: CRC-32
               header_size: 2
               size: 6
               value: "[e9 11 bf 89]"
@@ -226,11 +227,11 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
               header_size: 2
               size: 3
               value: Audio
-            - id: CodecId
+            - id: CodecID
               header_size: 2
               size: 11
               value: A_MPEG/L3
-            - id: TrackUid
+            - id: TrackUID
               header_size: 3
               size: 7
               value: 3391885737
@@ -274,7 +275,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
       header_size: 6
       size: 180
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[e7 12 18 fe]"
@@ -326,7 +327,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
       header_size: 6
       size: 769
       children:
-        - id: Crc32
+        - id: CRC-32
           header_size: 2
           size: 6
           value: "[1b 34 40 2b]"

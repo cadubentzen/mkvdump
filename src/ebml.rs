@@ -1,5 +1,5 @@
 macro_rules! ebml_elements {
-    ($(name = $element_name:ident, id = $id:expr, variant = $variant:ident;)+) => {
+    ($(name = $element_name:ident, original_name = $original_name:expr, id = $id:expr, variant = $variant:ident;)+) => {
         use serde::Serialize;
 
         #[derive(Debug, PartialEq)]
@@ -17,7 +17,10 @@ macro_rules! ebml_elements {
         #[derive(Debug, PartialEq, Clone, Serialize)]
         pub(crate) enum Id {
             Unknown(u32),
-            $($element_name,)+
+            $(
+                #[serde(rename = $original_name)]
+                $element_name,
+            )+
         }
 
         impl Id {
