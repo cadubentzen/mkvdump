@@ -27,9 +27,9 @@ fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
 
     let num_bytes = count_leading_zero_bits(first_byte) + 1;
 
-    // IDs can only have up to 4 bytes
+    // IDs can only have up to 4 bytes in Matroska
     if num_bytes > 4 {
-        println!("found ID with more than 4 bytes");
+        println!("Invalid ID with more than 4 bytes");
         return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
     }
 
