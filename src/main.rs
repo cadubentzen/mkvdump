@@ -125,8 +125,10 @@ fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
     let (input, id) = parse_id(input)?;
     let (input, body_size) = parse_varint(input)?;
 
-    if body_size.is_none() && id.get_type() != Type::Master {
-        eprintln!("Unknown sizes are only supported in Master elements");
+    // Only Segment and Cluster have unknownsizeallowed="1" in ebml_matroska.xml.
+    // Also mentioned in https://www.w3.org/TR/mse-byte-stream-format-webm/
+    if body_size.is_none() && id != Id::Segment && id != Id::Cluster {
+        eprintln!("Unknown sizes are only supported in Segment and Cluster elements");
         return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
     }
 
@@ -319,11 +321,8 @@ fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
 }
 
 fn parse_string<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], String> {
-    if header.body_size.is_none() {
-        eprintln!("Strings need a known body size");
-        return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
-    }
-    let (input, string_bytes) = take(header.body_size.unwrap())(input)?;
+    let body_size = header.body_size.expect("Strings need a known body size");
+    let (input, string_bytes) = take(body_size)(input)?;
     let value = String::from_utf8(string_bytes.to_vec())
         .map_err(|_| Err::Failure(Error::new(input, ErrorKind::Fail)))?;
 
@@ -334,12 +333,9 @@ fn parse_string<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Strin
 }
 
 fn parse_binary<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Vec<u8>> {
-    if header.body_size.is_none() {
-        eprintln!("Binaries need a known body size");
-        return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
-    }
+    let body_size = header.body_size.expect("Binaries need a known body size");
 
-    let (input, bytes) = take(header.body_size.unwrap())(input)?;
+    let (input, bytes) = take(body_size)(input)?;
     let value = Vec::from(bytes);
 
     Ok((input, value))
@@ -380,12 +376,7 @@ fn parse_int<'a, T: Integer64FromBigEndianBytes>(
     header: &Header,
     input: &'a [u8],
 ) -> IResult<&'a [u8], T> {
-    if header.body_size.is_none() {
-        eprintln!("Integers need a known body size");
-        return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
-    }
-
-    let body_size = header.body_size.unwrap();
+    let body_size = header.body_size.expect("Integers need a known body size");
     if body_size > 8 {
         eprintln!("Integer body size {} > 8", body_size);
         return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
@@ -393,7 +384,6 @@ fn parse_int<'a, T: Integer64FromBigEndianBytes>(
 
     let (input, int_bytes) = take(body_size)(input)?;
 
-    // FIXME: any efficient way to avoid this copy here?
     let mut value_buffer = [0u8; 8];
     value_buffer[(8 - int_bytes.len())..].copy_from_slice(int_bytes);
     let value = T::from_be_bytes(value_buffer);
@@ -402,12 +392,7 @@ fn parse_int<'a, T: Integer64FromBigEndianBytes>(
 }
 
 fn parse_float<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], f64> {
-    if header.body_size.is_none() {
-        eprintln!("Floats need a known body size");
-        return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
-    }
-
-    let body_size = header.body_size.unwrap();
+    let body_size = header.body_size.expect("Floats need a known body size");
 
     if body_size == 4 {
         let (input, float_bytes) = take(body_size)(input)?;
@@ -528,20 +513,9 @@ fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
         let element = &elements[index];
         match element.body {
             Body::Master => {
-                //
-                let mut size_remaining = element.header.body_size.unwrap_or_else(|| match element
-                    .header
-                    .id
-                {
-                    // Only Segment and Cluster have unknownsizeallowed="1" in ebml_matroska.xml.
-                    // Also mentioned in https://www.w3.org/TR/mse-byte-stream-format-webm/
-                    // FIXME (#13): this u64::MAX hack would not be needed if we built the tree up from
-                    // the element paths, rather, than relying on the sizes as we do now.
-                    Id::Segment | Id::Cluster => u64::MAX,
-                    _ => panic!("Only Segment or Cluster elements can have unknown sizes"),
-                });
+                // parse_header() already handles Unknown sizes.
+                let mut size_remaining = element.header.body_size.unwrap_or(u64::MAX);
 
-                // TODO: no need to copy here?
                 let mut children = Vec::<Element>::new();
                 while size_remaining > 0 {
                     index += 1;
@@ -704,23 +678,58 @@ mod tests {
 
     #[test]
     fn test_parse_corrupted() {
-        // It needs to find a valid 4-byte Element ID
+        // This integer would have more than 8 bytes.
+        // It needs to find a valid 4-byte Element ID, but can't
+        // so we get an incomplete.
         assert_eq!(
             parse_element(&[0x42, 0x87, 0x90, 0x01]),
             Err(Err::Incomplete(Needed::Unknown))
         );
 
-        // Now it finds it.
+        // Now it finds a Segment.
         const SEGMENT_ID: &[u8] = &[0x18, 0x53, 0x80, 0x67];
+        let (remaining, element) =
+            parse_element(&[0x42, 0x87, 0x90, 0x01, 0x18, 0x53, 0x80, 0x67]).unwrap();
         assert_eq!(
-            parse_element(&[0x42, 0x87, 0x90, 0x01, 0x18, 0x53, 0x80, 0x67]),
-            Ok((
+            (remaining, &element),
+            (
                 SEGMENT_ID,
-                Element {
+                &Element {
                     header: Header::new(Id::corrupted(), 4, 0),
                     body: Body::Binary(BinaryValue::Corrupted),
                 },
-            ))
+            )
+        );
+        assert!(element.header.id.get_value().is_none());
+    }
+
+    // TODO(#28): could have better error return types here for assertion.
+    // Currently it looks like we are reading the unknown size but we're
+    // actually trying to find a valid element to skip over the corrupted bytes.
+    #[test]
+    fn test_parse_corrupted_unknown_size() {
+        // String
+        assert_eq!(
+            parse_element(&[0x86, 0xFF, 0x56, 0x5F, 0x54]),
+            Err(Err::Incomplete(Needed::Unknown))
+        );
+
+        // Binary
+        assert_eq!(
+            parse_element(&[0x63, 0xA2, 0xFF]),
+            Err(Err::Incomplete(Needed::Unknown))
+        );
+
+        // Integer
+        assert_eq!(
+            parse_element(&[0x42, 0x87, 0xFF, 0x01]),
+            Err(Err::Incomplete(Needed::Unknown))
+        );
+
+        // Float
+        assert_eq!(
+            parse_element(&[0x44, 0x89, 0x90, 0x01]),
+            Err(Err::Incomplete(Needed::Unknown))
         );
     }
 
@@ -737,7 +746,22 @@ mod tests {
         assert_eq!(
             parse_float(&Header::new(Id::Duration, 3, 4), &[0x45, 0x7A, 0x30, 0x00]),
             Ok((EMPTY, 4003.))
-        )
+        );
+        assert_eq!(
+            parse_float(
+                &Header::new(Id::Duration, 3, 8),
+                &[0x40, 0xAF, 0x46, 0x00, 0x00, 0x00, 0x00, 0x00]
+            ),
+            Ok((EMPTY, 4003.))
+        );
+        assert_eq!(
+            parse_float(&Header::new(Id::Duration, 3, 0), EMPTY),
+            Ok((EMPTY, 0.))
+        );
+        assert_eq!(
+            parse_float(&Header::new(Id::Duration, 3, 7), EMPTY),
+            Err(Err::Failure(Error::new(EMPTY, ErrorKind::Fail)))
+        );
     }
 
     #[test]
