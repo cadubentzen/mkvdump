@@ -1,6 +1,6 @@
 macro_rules! ebml_elements {
     ($(name = $element_name:ident, original_name = $original_name:expr, id = $id:expr, variant = $variant:ident;)+) => {
-        use serde::Serialize;
+        use serde::{Serialize, Serializer};
 
         #[derive(Debug, PartialEq)]
         pub(crate) enum Type {
@@ -14,13 +14,10 @@ macro_rules! ebml_elements {
             Binary,
         }
 
-        #[derive(Debug, PartialEq, Clone, Serialize)]
+        #[derive(Debug, PartialEq, Clone)]
         pub(crate) enum Id {
             Unknown(u32),
-            $(
-                #[serde(rename = $original_name)]
-                $element_name,
-            )+
+            $($element_name,)+
         }
 
         impl Id {
@@ -39,7 +36,14 @@ macro_rules! ebml_elements {
             }
         }
 
-
+        impl Serialize for Id {
+            fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+                match *self {
+                    $(Id::$element_name => s.serialize_str($original_name),)+
+                    Id::Unknown(value) => s.serialize_str(&format!("Unknown (0x{:X})", value))
+                }
+            }
+        }
     };
 }
 

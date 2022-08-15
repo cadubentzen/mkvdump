@@ -568,6 +568,14 @@ mod tests {
             parse_id(FAILURE_INPUT),
             Err(Err::Failure(Error::new(FAILURE_INPUT, ErrorKind::Fail)))
         );
+
+        // Unknown ID
+        let (remaining, id) = parse_id(&[0x19, 0xAB, 0xCD, 0xEF]).unwrap();
+        assert_eq!((remaining, &id), (EMPTY, &Id::Unknown(0x19ABCDEF)));
+        assert_eq!(
+            serde_yaml::to_string(&id).unwrap().trim(),
+            "Unknown (0x19ABCDEF)"
+        );
     }
 
     #[test]
@@ -686,15 +694,20 @@ mod tests {
         );
 
         const INPUT_UNKNOWN_ENUMERATION: &[u8] = &[0x83, 0x81, 0xFF];
+        let (remaining, element) = parse_element(INPUT_UNKNOWN_ENUMERATION).unwrap();
         assert_eq!(
-            parse_element(INPUT_UNKNOWN_ENUMERATION),
-            Ok((
+            (remaining, &element),
+            (
                 EMPTY,
-                Element {
+                &Element {
                     header: Header::new(Id::TrackType, 2, 1),
                     body: Body::Unsigned(Enumeration::Unknown(255))
                 }
-            ))
+            )
+        );
+        assert_eq!(
+            serde_yaml::to_string(&element).unwrap().trim(),
+            "id: TrackType\nheader_size: 2\nsize: 3\nvalue: 255"
         );
     }
 
