@@ -43,7 +43,8 @@ macro_rules! ebml_elements {
             pub(crate) fn get_value(&self) -> Option<u32> {
                 match self {
                     $(Id::$element_name => Some($id),)+
-                    _ => None
+                    Id::Unknown(value) => Some(*value),
+                    Id::Corrupted => None
                 }
             }
         }

@@ -658,6 +658,7 @@ mod tests {
         let (remaining, id) = parse_id(&[0x19, 0xAB, 0xCD, 0xEF]).unwrap();
         assert_eq!((remaining, &id), (EMPTY, &Id::Unknown(0x19ABCDEF)));
         assert_eq!(serde_yaml::to_string(&id).unwrap().trim(), "'0x19ABCDEF'");
+        assert_eq!(id.get_value().unwrap(), 0x19ABCDEF);
     }
 
     #[test]
@@ -698,6 +699,28 @@ mod tests {
                 &[0x77, 0x65, 0x62, 0x6D, 0x00, 0x00]
             ),
             Ok((EMPTY, "webm".to_string()))
+        );
+    }
+
+    #[test]
+    fn test_parse_corrupted() {
+        // It needs to find a valid 4-byte Element ID
+        assert_eq!(
+            parse_element(&[0x42, 0x87, 0x90, 0x01]),
+            Err(Err::Incomplete(Needed::Unknown))
+        );
+
+        // Now it finds it.
+        const SEGMENT_ID: &[u8] = &[0x18, 0x53, 0x80, 0x67];
+        assert_eq!(
+            parse_element(&[0x42, 0x87, 0x90, 0x01, 0x18, 0x53, 0x80, 0x67]),
+            Ok((
+                SEGMENT_ID,
+                Element {
+                    header: Header::new(Id::corrupted(), 4, 0),
+                    body: Body::Binary(BinaryValue::Corrupted),
+                },
+            ))
         );
     }
 
