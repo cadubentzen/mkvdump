@@ -1,6 +1,6 @@
 ---
 source: src/main.rs
-assertion_line: 905
+assertion_line: 1003
 expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/test4.mkv\"))"
 ---
 - id: EBML
@@ -27,6 +27,10 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
   header_size: 5
   size: Unknown
   children:
+    - id: Corrupted
+      header_size: 134
+      size: 134
+      value: ~
     - id: Info
       header_size: 6
       size: 209

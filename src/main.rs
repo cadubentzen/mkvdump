@@ -6,6 +6,7 @@ use std::{
 
 use chrono::prelude::*;
 use clap::Parser;
+use nom::Needed;
 use nom::{
     bytes::streaming::take,
     combinator::peek,
@@ -29,7 +30,7 @@ fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
 
     // IDs can only have up to 4 bytes in Matroska
     if num_bytes > 4 {
-        println!("Invalid ID with more than 4 bytes");
+        eprintln!("Invalid ID with more than 4 bytes");
         return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
     }
 
@@ -125,7 +126,8 @@ fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
     let (input, body_size) = parse_varint(input)?;
 
     if body_size.is_none() && id.get_type() != Type::Master {
-        panic!("Unknown sizes are only supported in Master elements");
+        eprintln!("Unknown sizes are only supported in Master elements");
+        return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
     }
 
     let header_size = initial_len - input.len();
@@ -185,6 +187,7 @@ enum BinaryValue {
     SimpleBlock(SimpleBlock),
     Block(Block),
     Void,
+    Corrupted,
 }
 
 fn serialize_short_payloads<S: Serializer>(payload: &[u8], s: S) -> Result<S::Ok, S::Error> {
@@ -223,11 +226,63 @@ struct Element {
     pub body: Body,
 }
 
-fn parse_element(input: &[u8]) -> IResult<&[u8], Element> {
-    let (input, header) = parse_header(input)?;
+// If we ever hit a damaged element, we'll try to recover by finding
+// one of those IDs next to start clean. Those are the 4-bytes IDs,
+// which according to the EBML spec:
+// "Four-octet Element IDs are somewhat special in that they are useful
+// for resynchronizing to major structures in the event of data corruption or loss."
+const SYNC_ELEMENT_IDS: &[Id] = &[
+    Id::Cluster,
+    Id::Ebml,
+    Id::Segment,
+    Id::SeekHead,
+    Id::Info,
+    Id::Tracks,
+    Id::Cues,
+    Id::Attachments,
+    Id::Chapters,
+    Id::Tags,
+];
+
+fn find_valid_element(input: &[u8]) -> IResult<&[u8], Element> {
+    let mut min_offset = None;
+    for sync_id in SYNC_ELEMENT_IDS {
+        let id_value = sync_id.get_value().unwrap();
+        let id_bytes = id_value.to_be_bytes();
+        let lookahead = input.len().min(min_offset.unwrap_or(usize::MAX));
+        for (offset, window) in input[..lookahead].windows(id_bytes.len()).enumerate() {
+            if window == id_bytes {
+                let min_offset = min_offset.get_or_insert(offset);
+                if offset < *min_offset {
+                    *min_offset = offset;
+                }
+                break;
+            }
+        }
+    }
+    if let Some(offset) = min_offset {
+        Ok((
+            &input[offset..],
+            Element {
+                header: Header::new(Id::corrupted(), offset, 0),
+                body: Body::Binary(BinaryValue::Corrupted),
+            },
+        ))
+    } else {
+        Err(Err::Incomplete(Needed::Unknown))
+    }
+}
+
+fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
+    let header_result = parse_header(original_input);
+    if header_result.is_err() {
+        return find_valid_element(original_input);
+    }
+
+    let (input, header) = header_result.unwrap();
     let element_type = header.id.get_type();
 
-    let (input, body) = match element_type {
+    let parsing_result = match element_type {
         Type::Master => Ok((input, Body::Master)),
         Type::Unsigned => parse_int(&header, input)
             .map(|(input, value)| (input, Body::Unsigned(Enumeration::new(&header.id, value)))),
@@ -252,14 +307,23 @@ fn parse_element(input: &[u8]) -> IResult<&[u8], Element> {
             };
             (input, Body::Binary(binary_value))
         }),
-    }?;
+    };
+    if parsing_result.is_err() {
+        return find_valid_element(original_input);
+    }
+
+    let (input, body) = parsing_result.unwrap();
+
     let element = Element { header, body };
     Ok((input, element))
 }
 
 fn parse_string<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], String> {
-    let (input, string_bytes) =
-        take(header.body_size.expect("Strings need a known body size"))(input)?;
+    if header.body_size.is_none() {
+        eprintln!("Strings need a known body size");
+        return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
+    }
+    let (input, string_bytes) = take(header.body_size.unwrap())(input)?;
     let value = String::from_utf8(string_bytes.to_vec())
         .map_err(|_| Err::Failure(Error::new(input, ErrorKind::Fail)))?;
 
@@ -270,7 +334,12 @@ fn parse_string<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Strin
 }
 
 fn parse_binary<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Vec<u8>> {
-    let (input, bytes) = take(header.body_size.expect("Binaries need a known body size"))(input)?;
+    if header.body_size.is_none() {
+        eprintln!("Binaries need a known body size");
+        return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
+    }
+
+    let (input, bytes) = take(header.body_size.unwrap())(input)?;
     let value = Vec::from(bytes);
 
     Ok((input, value))
@@ -311,8 +380,16 @@ fn parse_int<'a, T: Integer64FromBigEndianBytes>(
     header: &Header,
     input: &'a [u8],
 ) -> IResult<&'a [u8], T> {
-    let body_size = header.body_size.expect("Integers need a known body size");
-    assert!(body_size <= 8);
+    if header.body_size.is_none() {
+        eprintln!("Integers need a known body size");
+        return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
+    }
+
+    let body_size = header.body_size.unwrap();
+    if body_size > 8 {
+        eprintln!("Integer body size {} > 8", body_size);
+        return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
+    }
 
     let (input, int_bytes) = take(body_size)(input)?;
 
@@ -325,17 +402,25 @@ fn parse_int<'a, T: Integer64FromBigEndianBytes>(
 }
 
 fn parse_float<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], f64> {
-    let body_size = header.body_size.expect("Floats need a known body size");
-    let (input, float_bytes) = take(body_size)(input)?;
+    if header.body_size.is_none() {
+        eprintln!("Floats need a known body size");
+        return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
+    }
+
+    let body_size = header.body_size.unwrap();
 
     if body_size == 4 {
+        let (input, float_bytes) = take(body_size)(input)?;
         let value = f32::from_be_bytes(float_bytes.try_into().unwrap()) as f64;
         Ok((input, value))
     } else if body_size == 8 {
+        let (input, float_bytes) = take(body_size)(input)?;
         let value = f64::from_be_bytes(float_bytes.try_into().unwrap());
         Ok((input, value))
+    } else if body_size == 0 {
+        Ok((input, 0f64))
     } else {
-        todo!()
+        Err(Err::Failure(Error::new(input, ErrorKind::Fail)))
     }
 }
 
@@ -456,7 +541,7 @@ fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
                     _ => panic!("Only Segment or Cluster elements can have unknown sizes"),
                 });
 
-                // TODO: no need to copy here
+                // TODO: no need to copy here?
                 let mut children = Vec::<Element>::new();
                 while size_remaining > 0 {
                     index += 1;
@@ -512,7 +597,7 @@ fn parse_buffer_to_end(input: &[u8]) -> Vec<ElementTree> {
                 read_buffer = new_read_buffer;
             }
             _ => {
-                println!("skipping one byte");
+                eprintln!("skipping one byte");
                 read_buffer = &read_buffer[1..];
                 if read_buffer.is_empty() {
                     break;
@@ -572,7 +657,7 @@ mod tests {
         // Unknown ID
         let (remaining, id) = parse_id(&[0x19, 0xAB, 0xCD, 0xEF]).unwrap();
         assert_eq!((remaining, &id), (EMPTY, &Id::Unknown(0x19ABCDEF)));
-        assert_eq!(serde_yaml::to_string(&id).unwrap().trim(), "0x19ABCDEF");
+        assert_eq!(serde_yaml::to_string(&id).unwrap().trim(), "'0x19ABCDEF'");
     }
 
     #[test]
@@ -918,7 +1003,7 @@ mod tests {
     snapshot_test!(test4, "../inputs/matroska-test-suite/test4.mkv");
     snapshot_test!(test5, "../inputs/matroska-test-suite/test5.mkv");
     snapshot_test!(test6, "../inputs/matroska-test-suite/test6.mkv");
-    // snapshot_test!(test7, "../inputs/matroska-test-suite/test7.mkv");
+    snapshot_test!(test7, "../inputs/matroska-test-suite/test7.mkv");
     snapshot_test!(test8, "../inputs/matroska-test-suite/test8.mkv");
 }
 

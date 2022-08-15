@@ -17,6 +17,7 @@ macro_rules! ebml_elements {
         #[derive(Debug, PartialEq, Clone)]
         pub(crate) enum Id {
             Unknown(u32),
+            Corrupted,
             $($element_name,)+
         }
 
@@ -28,17 +29,21 @@ macro_rules! ebml_elements {
                 }
             }
 
+            pub(crate) fn corrupted() -> Self {
+                Self::Corrupted
+            }
+
             pub(crate) fn get_type(&self) -> Type {
                 match self {
                     $(Id::$element_name => Type::$variant,)+
-                    Id::Unknown(_) => Type::Binary
+                    Id::Unknown(_) | Id::Corrupted => Type::Binary
                 }
             }
 
-            pub(crate) fn get_path(&self) -> &[Id] {
+            pub(crate) fn get_value(&self) -> Option<u32> {
                 match self {
-                    $(Id::$element_name => &[$(Id::$path,)*],)+
-                    _ => &[]
+                    $(Id::$element_name => Some($id),)+
+                    _ => None
                 }
             }
         }
@@ -47,7 +52,8 @@ macro_rules! ebml_elements {
             fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 match *self {
                     $(Id::$element_name => s.serialize_str($original_name),)+
-                    Id::Unknown(value) => s.serialize_str(&format!("0x{:X}", value))
+                    Id::Unknown(value) => s.serialize_str(&format!("0x{:X}", value)),
+                    Id::Corrupted => s.serialize_str("Corrupted")
                 }
             }
         }
