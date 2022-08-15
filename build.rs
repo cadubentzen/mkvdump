@@ -123,19 +123,6 @@ fn apply_label_quirks(label: &str, reserved_index: &mut i32) -> String {
     label
 }
 
-fn build_path(path: &str) -> String {
-    if path.contains("\\)") {
-        return "".into();
-    }
-
-    let non_recursive = path.replace('+', "");
-    let elements = non_recursive
-        .split('\\')
-        .map(|e| e.to_case(Case::Pascal))
-        .collect::<Vec<_>>();
-    elements.join("/")
-}
-
 fn create_elements_file(elements: &[Element]) -> std::io::Result<()> {
     let mut file = File::create("src/elements.rs")?;
 
@@ -151,15 +138,14 @@ fn create_elements_file(elements: &[Element]) -> std::io::Result<()> {
         name,
         id,
         variant,
-        path,
+        path: _,
         details: _,
     } in elements
     {
         let enum_name = name.to_case(Case::Pascal);
-        let path = build_path(path);
         writeln!(
             file,
-            "    name = {enum_name}, original_name = \"{name}\", id = {id}, variant = {variant}, path = {path};"
+            "    name = {enum_name}, original_name = \"{name}\", id = {id}, variant = {variant};"
         )?;
     }
     writeln!(file, "}}")?;

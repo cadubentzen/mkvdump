@@ -1,5 +1,5 @@
 macro_rules! ebml_elements {
-    ($(name = $element_name:ident, original_name = $original_name:expr, id = $id:expr, variant = $variant:ident, path = $(/$path:ident)*;)+) => {
+    ($(name = $element_name:ident, original_name = $original_name:expr, id = $id:expr, variant = $variant:ident;)+) => {
         use serde::{Serialize, Serializer};
 
         #[derive(Debug, PartialEq)]
