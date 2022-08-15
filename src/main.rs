@@ -257,9 +257,9 @@ fn parse_element(input: &[u8]) -> IResult<&[u8], Element> {
     Ok((input, element))
 }
 
-fn parse_string<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], String> {
+fn parse_string<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], String> {
     let (input, string_bytes) =
-        take(metadata.body_size.expect("Strings need a known body size"))(input)?;
+        take(header.body_size.expect("Strings need a known body size"))(input)?;
     let value = String::from_utf8(string_bytes.to_vec())
         .map_err(|_| Err::Failure(Error::new(input, ErrorKind::Fail)))?;
 
@@ -269,15 +269,15 @@ fn parse_string<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], Str
     Ok((input, value))
 }
 
-fn parse_binary<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], Vec<u8>> {
-    let (input, bytes) = take(metadata.body_size.expect("Binaries need a known body size"))(input)?;
+fn parse_binary<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Vec<u8>> {
+    let (input, bytes) = take(header.body_size.expect("Binaries need a known body size"))(input)?;
     let value = Vec::from(bytes);
 
     Ok((input, value))
 }
 
-fn parse_date<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], DateTime<Utc>> {
-    let (input, timestamp_nanos_to_2001) = parse_int::<i64>(metadata, input)?;
+fn parse_date<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], DateTime<Utc>> {
+    let (input, timestamp_nanos_to_2001) = parse_int::<i64>(header, input)?;
     let nanos_2001 = NaiveDate::from_ymd(2001, 1, 1)
         .and_hms(0, 0, 0)
         .timestamp_nanos();
@@ -308,11 +308,14 @@ impl Integer64FromBigEndianBytes for i64 {
 }
 
 fn parse_int<'a, T: Integer64FromBigEndianBytes>(
-    metadata: &Header,
+    header: &Header,
     input: &'a [u8],
 ) -> IResult<&'a [u8], T> {
-    let (input, int_bytes) =
-        take(metadata.body_size.expect("Integers need a known body size"))(input)?;
+    let body_size = header.body_size.expect("Integers need a known body size");
+    assert!(body_size <= 8);
+
+    let (input, int_bytes) = take(body_size)(input)?;
+
     // FIXME: any efficient way to avoid this copy here?
     let mut value_buffer = [0u8; 8];
     value_buffer[(8 - int_bytes.len())..].copy_from_slice(int_bytes);
@@ -321,8 +324,8 @@ fn parse_int<'a, T: Integer64FromBigEndianBytes>(
     Ok((input, value))
 }
 
-fn parse_float<'a>(metadata: &Header, input: &'a [u8]) -> IResult<&'a [u8], f64> {
-    let body_size = metadata.body_size.expect("Floats need a known body size");
+fn parse_float<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], f64> {
+    let body_size = header.body_size.expect("Floats need a known body size");
     let (input, float_bytes) = take(body_size)(input)?;
 
     if body_size == 4 {
@@ -584,7 +587,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_element_metadata() {
+    fn test_parse_element_header() {
         const INPUT: &[u8] = &[0x1A, 0x45, 0xDF, 0xA3, 0x9F];
         assert_eq!(
             parse_header(INPUT),
