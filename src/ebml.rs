@@ -1,5 +1,5 @@
 macro_rules! ebml_elements {
-    ($(name = $element_name:ident, original_name = $original_name:expr, id = $id:expr, variant = $variant:ident;)+) => {
+    ($(name = $element_name:ident, original_name = $original_name:expr, id = $id:expr, variant = $variant:ident, path = $(/$path:ident)*;)+) => {
         use serde::{Serialize, Serializer};
 
         #[derive(Debug, PartialEq)]
@@ -32,6 +32,13 @@ macro_rules! ebml_elements {
                 match self {
                     $(Id::$element_name => Type::$variant,)+
                     Id::Unknown(_) => Type::Binary
+                }
+            }
+
+            pub(crate) fn get_path(&self) -> &[Id] {
+                match self {
+                    $(Id::$element_name => &[$(Id::$path,)*],)+
+                    _ => &[]
                 }
             }
         }
