@@ -2,8 +2,8 @@ macro_rules! ebml_elements {
     ($(name = $element_name:ident, original_name = $original_name:expr, id = $id:expr, variant = $variant:ident;)+) => {
         use serde::{Serialize, Serializer};
 
-        #[derive(Debug, PartialEq)]
-        pub(crate) enum Type {
+        #[derive(Debug)]
+        pub enum Type {
             Unsigned,
             Signed,
             Float,
@@ -14,33 +14,33 @@ macro_rules! ebml_elements {
             Binary,
         }
 
-        #[derive(Debug, PartialEq, Clone)]
-        pub(crate) enum Id {
+        #[derive(Debug, PartialEq, Eq, Clone)]
+        pub enum Id {
             Unknown(u32),
             Corrupted,
             $($element_name,)+
         }
 
         impl Id {
-            pub(crate) fn new(id: u32) -> Self {
+            pub fn new(id: u32) -> Self {
                 match id {
                     $($id => Self::$element_name,)+
                     _ => Self::Unknown(id)
                 }
             }
 
-            pub(crate) fn corrupted() -> Self {
+            pub fn corrupted() -> Self {
                 Self::Corrupted
             }
 
-            pub(crate) fn get_type(&self) -> Type {
+            pub fn get_type(&self) -> Type {
                 match self {
                     $(Id::$element_name => Type::$variant,)+
                     Id::Unknown(_) | Id::Corrupted => Type::Binary
                 }
             }
 
-            pub(crate) fn get_value(&self) -> Option<u32> {
+            pub fn get_value(&self) -> Option<u32> {
                 match self {
                     $(Id::$element_name => Some($id),)+
                     Id::Unknown(value) => Some(*value),
@@ -67,8 +67,8 @@ macro_rules! ebml_enumerations {
         use serde::Serialize;
 
         $(
-            #[derive(Debug, PartialEq, Clone, Serialize)]
-            pub(crate) enum $id {
+            #[derive(Debug, PartialEq, Eq, Clone, Serialize)]
+            pub enum $id {
                 $(
                     #[serde(rename = $original_label)]
                     $variant,
@@ -76,7 +76,7 @@ macro_rules! ebml_enumerations {
             }
 
             impl $id {
-                pub(crate) fn new(value: u64) -> Option<Self> {
+                pub fn new(value: u64) -> Option<Self> {
                     match value {
                         $($value => Some(Self::$variant),)+
                         _ => None,
@@ -85,15 +85,15 @@ macro_rules! ebml_enumerations {
             }
         )+
 
-        #[derive(Debug, PartialEq, Clone, Serialize)]
+        #[derive(Debug, PartialEq, Eq, Clone, Serialize)]
         #[serde(untagged)]
-        pub(crate) enum Enumeration {
+        pub enum Enumeration {
             Unknown(u64),
             $($id($id),)+
         }
 
         impl Enumeration {
-            pub(crate) fn new(id: &Id, value: u64) -> Self {
+            pub fn new(id: &Id, value: u64) -> Self {
                 match id {
                     $(
                         Id::$id => $id::new(value).map_or(Self::Unknown(value), Self::$id),
