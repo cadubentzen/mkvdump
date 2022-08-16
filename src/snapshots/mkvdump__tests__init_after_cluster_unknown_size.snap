@@ -1,0 +1,583 @@
+---
+source: src/lib.rs
+assertion_line: 1039
+expression: "parse_buffer_to_end(include_bytes!(\"../inputs/init_after_cluster_unknown_size.webm\"))"
+---
+- id: Cluster
+  header_size: 6
+  size: Unknown
+  children:
+    - id: Timestamp
+      header_size: 2
+      size: 4
+      value: 1084
+    - id: SimpleBlock
+      header_size: 3
+      size: 16068
+      value:
+        track_number: 1
+        timestamp: 0
+        keyframe: true
+    - id: SimpleBlock
+      header_size: 3
+      size: 7179
+      value:
+        track_number: 1
+        timestamp: 42
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 84
+    - id: SimpleBlock
+      header_size: 3
+      size: 169
+      value:
+        track_number: 1
+        timestamp: 126
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 167
+    - id: SimpleBlock
+      header_size: 3
+      size: 1995
+      value:
+        track_number: 1
+        timestamp: 209
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 251
+    - id: SimpleBlock
+      header_size: 3
+      size: 517
+      value:
+        track_number: 1
+        timestamp: 292
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 334
+    - id: SimpleBlock
+      header_size: 3
+      size: 1597
+      value:
+        track_number: 1
+        timestamp: 376
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 418
+    - id: SimpleBlock
+      header_size: 3
+      size: 753
+      value:
+        track_number: 1
+        timestamp: 459
+    - id: SimpleBlock
+      header_size: 2
+      size: 35
+      value:
+        track_number: 1
+        timestamp: 501
+    - id: SimpleBlock
+      header_size: 3
+      size: 14709
+      value:
+        track_number: 1
+        timestamp: 543
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 584
+    - id: SimpleBlock
+      header_size: 3
+      size: 1173
+      value:
+        track_number: 1
+        timestamp: 626
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 668
+    - id: SimpleBlock
+      header_size: 3
+      size: 3421
+      value:
+        track_number: 1
+        timestamp: 709
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 751
+    - id: SimpleBlock
+      header_size: 3
+      size: 1027
+      value:
+        track_number: 1
+        timestamp: 793
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 835
+    - id: SimpleBlock
+      header_size: 3
+      size: 1822
+      value:
+        track_number: 1
+        timestamp: 876
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 918
+    - id: SimpleBlock
+      header_size: 3
+      size: 981
+      value:
+        track_number: 1
+        timestamp: 960
+    - id: SimpleBlock
+      header_size: 2
+      size: 32
+      value:
+        track_number: 1
+        timestamp: 1001
+    - id: SimpleBlock
+      header_size: 4
+      size: 16876
+      value:
+        track_number: 1
+        timestamp: 1043
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 1085
+    - id: SimpleBlock
+      header_size: 3
+      size: 862
+      value:
+        track_number: 1
+        timestamp: 1127
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 1168
+    - id: SimpleBlock
+      header_size: 3
+      size: 2715
+      value:
+        track_number: 1
+        timestamp: 1210
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 1252
+    - id: SimpleBlock
+      header_size: 3
+      size: 755
+      value:
+        track_number: 1
+        timestamp: 1293
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 1335
+    - id: SimpleBlock
+      header_size: 3
+      size: 1510
+      value:
+        track_number: 1
+        timestamp: 1377
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 1419
+    - id: SimpleBlock
+      header_size: 3
+      size: 722
+      value:
+        track_number: 1
+        timestamp: 1460
+    - id: SimpleBlock
+      header_size: 2
+      size: 33
+      value:
+        track_number: 1
+        timestamp: 1502
+    - id: SimpleBlock
+      header_size: 4
+      size: 19601
+      value:
+        track_number: 1
+        timestamp: 1544
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 1585
+    - id: SimpleBlock
+      header_size: 3
+      size: 460
+      value:
+        track_number: 1
+        timestamp: 1627
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 1669
+    - id: SimpleBlock
+      header_size: 3
+      size: 1699
+      value:
+        track_number: 1
+        timestamp: 1710
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 1752
+    - id: SimpleBlock
+      header_size: 3
+      size: 359
+      value:
+        track_number: 1
+        timestamp: 1794
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 1836
+    - id: SimpleBlock
+      header_size: 3
+      size: 746
+      value:
+        track_number: 1
+        timestamp: 1877
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 1919
+    - id: SimpleBlock
+      header_size: 3
+      size: 307
+      value:
+        track_number: 1
+        timestamp: 1961
+    - id: SimpleBlock
+      header_size: 2
+      size: 32
+      value:
+        track_number: 1
+        timestamp: 2002
+    - id: SimpleBlock
+      header_size: 3
+      size: 10673
+      value:
+        track_number: 1
+        timestamp: 2044
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 2086
+    - id: SimpleBlock
+      header_size: 3
+      size: 229
+      value:
+        track_number: 1
+        timestamp: 2128
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 2169
+    - id: SimpleBlock
+      header_size: 3
+      size: 1181
+      value:
+        track_number: 1
+        timestamp: 2211
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 2253
+    - id: SimpleBlock
+      header_size: 3
+      size: 214
+      value:
+        track_number: 1
+        timestamp: 2294
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 2336
+    - id: SimpleBlock
+      header_size: 3
+      size: 564
+      value:
+        track_number: 1
+        timestamp: 2378
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 2420
+    - id: SimpleBlock
+      header_size: 3
+      size: 214
+      value:
+        track_number: 1
+        timestamp: 2461
+    - id: SimpleBlock
+      header_size: 2
+      size: 32
+      value:
+        track_number: 1
+        timestamp: 2503
+    - id: SimpleBlock
+      header_size: 3
+      size: 7248
+      value:
+        track_number: 1
+        timestamp: 2545
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 2586
+    - id: SimpleBlock
+      header_size: 3
+      size: 183
+      value:
+        track_number: 1
+        timestamp: 2628
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 2670
+    - id: SimpleBlock
+      header_size: 3
+      size: 557
+      value:
+        track_number: 1
+        timestamp: 2711
+    - id: SimpleBlock
+      header_size: 2
+      size: 9
+      value:
+        track_number: 1
+        timestamp: 2753
+    - id: SimpleBlock
+      header_size: 3
+      size: 252
+      value:
+        track_number: 1
+        timestamp: 2795
+    - id: SimpleBlock
+      header_size: 3
+      size: 170
+      value:
+        track_number: 1
+        timestamp: 2837
+    - id: SimpleBlock
+      header_size: 2
+      size: 33
+      value:
+        track_number: 1
+        timestamp: 2878
+- id: EBML
+  header_size: 5
+  size: 36
+  children:
+    - id: EBMLVersion
+      header_size: 3
+      size: 4
+      value: 1
+    - id: EBMLReadVersion
+      header_size: 3
+      size: 4
+      value: 1
+    - id: EBMLMaxIDLength
+      header_size: 3
+      size: 4
+      value: 4
+    - id: EBMLMaxSizeLength
+      header_size: 3
+      size: 4
+      value: 8
+    - id: DocType
+      header_size: 3
+      size: 7
+      value: webm
+    - id: DocTypeVersion
+      header_size: 3
+      size: 4
+      value: 2
+    - id: DocTypeReadVersion
+      header_size: 3
+      size: 4
+      value: 2
+- id: Segment
+  header_size: 12
+  size: Unknown
+  children:
+    - id: Void
+      header_size: 9
+      size: 229
+      value: ~
+    - id: Info
+      header_size: 5
+      size: 44
+      children:
+        - id: TimestampScale
+          header_size: 4
+          size: 7
+          value: 1000000
+        - id: MuxingApp
+          header_size: 3
+          size: 16
+          value: Lavf58.29.100
+        - id: WritingApp
+          header_size: 3
+          size: 16
+          value: Lavf58.29.100
+    - id: Tracks
+      header_size: 5
+      size: 101
+      children:
+        - id: TrackEntry
+          header_size: 9
+          size: 96
+          children:
+            - id: TrackNumber
+              header_size: 2
+              size: 3
+              value: 1
+            - id: TrackUID
+              header_size: 3
+              size: 4
+              value: 1
+            - id: FlagLacing
+              header_size: 2
+              size: 3
+              value: 0
+            - id: Language
+              header_size: 4
+              size: 7
+              value: und
+            - id: CodecID
+              header_size: 2
+              size: 7
+              value: V_AV1
+            - id: TrackType
+              header_size: 2
+              size: 3
+              value: video
+            - id: DefaultDuration
+              header_size: 4
+              size: 8
+              value: 41708333
+            - id: Video
+              header_size: 9
+              size: 32
+              children:
+                - id: PixelWidth
+                  header_size: 2
+                  size: 4
+                  value: 1280
+                - id: PixelHeight
+                  header_size: 2
+                  size: 4
+                  value: 720
+                - id: Colour
+                  header_size: 3
+                  size: 15
+                  children:
+                    - id: Range
+                      header_size: 3
+                      size: 4
+                      value: broadcast range
+                    - id: ChromaSitingHorz
+                      header_size: 3
+                      size: 4
+                      value: left collocated
+                    - id: ChromaSitingVert
+                      header_size: 3
+                      size: 4
+                      value: half
+            - id: CodecPrivate
+              header_size: 3
+              size: 20
+              value: "[81 05 0c 00 0a 0b 00 00 00 2d 4c ff b3 df ff 98 04]"
+    - id: Tags
+      header_size: 5
+      size: 61
+      children:
+        - id: Tag
+          header_size: 10
+          size: 56
+          children:
+            - id: Targets
+              header_size: 10
+              size: 10
+              children: []
+            - id: SimpleTag
+              header_size: 10
+              size: 36
+              children:
+                - id: TagName
+                  header_size: 3
+                  size: 10
+                  value: ENCODER
+                - id: TagString
+                  header_size: 3
+                  size: 16
+                  value: Lavf58.29.100
+

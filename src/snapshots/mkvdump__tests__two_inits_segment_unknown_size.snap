@@ -1,0 +1,302 @@
+---
+source: src/lib.rs
+assertion_line: 1035
+expression: "parse_buffer_to_end(include_bytes!(\"../inputs/two_inits_segment_unknown_size.webm\"))"
+---
+- id: EBML
+  header_size: 5
+  size: 36
+  children:
+    - id: EBMLVersion
+      header_size: 3
+      size: 4
+      value: 1
+    - id: EBMLReadVersion
+      header_size: 3
+      size: 4
+      value: 1
+    - id: EBMLMaxIDLength
+      header_size: 3
+      size: 4
+      value: 4
+    - id: EBMLMaxSizeLength
+      header_size: 3
+      size: 4
+      value: 8
+    - id: DocType
+      header_size: 3
+      size: 7
+      value: webm
+    - id: DocTypeVersion
+      header_size: 3
+      size: 4
+      value: 2
+    - id: DocTypeReadVersion
+      header_size: 3
+      size: 4
+      value: 2
+- id: Segment
+  header_size: 12
+  size: Unknown
+  children:
+    - id: Void
+      header_size: 9
+      size: 229
+      value: ~
+    - id: Info
+      header_size: 5
+      size: 44
+      children:
+        - id: TimestampScale
+          header_size: 4
+          size: 7
+          value: 1000000
+        - id: MuxingApp
+          header_size: 3
+          size: 16
+          value: Lavf58.29.100
+        - id: WritingApp
+          header_size: 3
+          size: 16
+          value: Lavf58.29.100
+    - id: Tracks
+      header_size: 5
+      size: 101
+      children:
+        - id: TrackEntry
+          header_size: 9
+          size: 96
+          children:
+            - id: TrackNumber
+              header_size: 2
+              size: 3
+              value: 1
+            - id: TrackUID
+              header_size: 3
+              size: 4
+              value: 1
+            - id: FlagLacing
+              header_size: 2
+              size: 3
+              value: 0
+            - id: Language
+              header_size: 4
+              size: 7
+              value: und
+            - id: CodecID
+              header_size: 2
+              size: 7
+              value: V_AV1
+            - id: TrackType
+              header_size: 2
+              size: 3
+              value: video
+            - id: DefaultDuration
+              header_size: 4
+              size: 8
+              value: 41708333
+            - id: Video
+              header_size: 9
+              size: 32
+              children:
+                - id: PixelWidth
+                  header_size: 2
+                  size: 4
+                  value: 1280
+                - id: PixelHeight
+                  header_size: 2
+                  size: 4
+                  value: 720
+                - id: Colour
+                  header_size: 3
+                  size: 15
+                  children:
+                    - id: Range
+                      header_size: 3
+                      size: 4
+                      value: broadcast range
+                    - id: ChromaSitingHorz
+                      header_size: 3
+                      size: 4
+                      value: left collocated
+                    - id: ChromaSitingVert
+                      header_size: 3
+                      size: 4
+                      value: half
+            - id: CodecPrivate
+              header_size: 3
+              size: 20
+              value: "[81 05 0c 00 0a 0b 00 00 00 2d 4c ff b3 df ff 98 04]"
+    - id: Tags
+      header_size: 5
+      size: 61
+      children:
+        - id: Tag
+          header_size: 10
+          size: 56
+          children:
+            - id: Targets
+              header_size: 10
+              size: 10
+              children: []
+            - id: SimpleTag
+              header_size: 10
+              size: 36
+              children:
+                - id: TagName
+                  header_size: 3
+                  size: 10
+                  value: ENCODER
+                - id: TagString
+                  header_size: 3
+                  size: 16
+                  value: Lavf58.29.100
+- id: EBML
+  header_size: 5
+  size: 36
+  children:
+    - id: EBMLVersion
+      header_size: 3
+      size: 4
+      value: 1
+    - id: EBMLReadVersion
+      header_size: 3
+      size: 4
+      value: 1
+    - id: EBMLMaxIDLength
+      header_size: 3
+      size: 4
+      value: 4
+    - id: EBMLMaxSizeLength
+      header_size: 3
+      size: 4
+      value: 8
+    - id: DocType
+      header_size: 3
+      size: 7
+      value: webm
+    - id: DocTypeVersion
+      header_size: 3
+      size: 4
+      value: 2
+    - id: DocTypeReadVersion
+      header_size: 3
+      size: 4
+      value: 2
+- id: Segment
+  header_size: 12
+  size: Unknown
+  children:
+    - id: Void
+      header_size: 9
+      size: 229
+      value: ~
+    - id: Info
+      header_size: 5
+      size: 44
+      children:
+        - id: TimestampScale
+          header_size: 4
+          size: 7
+          value: 1000000
+        - id: MuxingApp
+          header_size: 3
+          size: 16
+          value: Lavf58.29.100
+        - id: WritingApp
+          header_size: 3
+          size: 16
+          value: Lavf58.29.100
+    - id: Tracks
+      header_size: 5
+      size: 101
+      children:
+        - id: TrackEntry
+          header_size: 9
+          size: 96
+          children:
+            - id: TrackNumber
+              header_size: 2
+              size: 3
+              value: 1
+            - id: TrackUID
+              header_size: 3
+              size: 4
+              value: 1
+            - id: FlagLacing
+              header_size: 2
+              size: 3
+              value: 0
+            - id: Language
+              header_size: 4
+              size: 7
+              value: und
+            - id: CodecID
+              header_size: 2
+              size: 7
+              value: V_AV1
+            - id: TrackType
+              header_size: 2
+              size: 3
+              value: video
+            - id: DefaultDuration
+              header_size: 4
+              size: 8
+              value: 41708333
+            - id: Video
+              header_size: 9
+              size: 32
+              children:
+                - id: PixelWidth
+                  header_size: 2
+                  size: 4
+                  value: 1280
+                - id: PixelHeight
+                  header_size: 2
+                  size: 4
+                  value: 720
+                - id: Colour
+                  header_size: 3
+                  size: 15
+                  children:
+                    - id: Range
+                      header_size: 3
+                      size: 4
+                      value: broadcast range
+                    - id: ChromaSitingHorz
+                      header_size: 3
+                      size: 4
+                      value: left collocated
+                    - id: ChromaSitingVert
+                      header_size: 3
+                      size: 4
+                      value: half
+            - id: CodecPrivate
+              header_size: 3
+              size: 20
+              value: "[81 05 0c 00 0a 0b 00 00 00 2d 4c ff b3 df ff 98 04]"
+    - id: Tags
+      header_size: 5
+      size: 61
+      children:
+        - id: Tag
+          header_size: 10
+          size: 56
+          children:
+            - id: Targets
+              header_size: 10
+              size: 10
+              children: []
+            - id: SimpleTag
+              header_size: 10
+              size: 36
+              children:
+                - id: TagName
+                  header_size: 3
+                  size: 10
+                  value: ENCODER
+                - id: TagString
+                  header_size: 3
+                  size: 16
+                  value: Lavf58.29.100
+

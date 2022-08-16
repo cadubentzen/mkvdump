@@ -500,6 +500,12 @@ pub enum ElementTree {
     Master(MasterElement),
 }
 
+impl Id {
+    fn can_be_children_of(&self, other: &Id) -> bool {
+        !matches!((self, other), (Id::Cluster, Id::Cluster) | (Id::Ebml, _))
+    }
+}
+
 fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
     let mut trees = Vec::<ElementTree>::new();
 
@@ -514,10 +520,9 @@ fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
                 let mut children = Vec::<Element>::new();
                 while size_remaining > 0 {
                     index += 1;
+
                     if let Some(next_child) = elements.get(index) {
-                        // Hack before building tree using XML paths (#13):
-                        // a Cluster can't be parent of another Cluster
-                        if element.header.id == Id::Cluster && next_child.header.id == Id::Cluster {
+                        if !next_child.header.id.can_be_children_of(&element.header.id) {
                             index -= 1;
                             break;
                         }
@@ -1026,4 +1031,13 @@ mod tests {
     snapshot_test!(test6, "../inputs/matroska-test-suite/test6.mkv");
     snapshot_test!(test7, "../inputs/matroska-test-suite/test7.mkv");
     snapshot_test!(test8, "../inputs/matroska-test-suite/test8.mkv");
+
+    snapshot_test!(
+        test_two_inits_segment_unknown_size,
+        "../inputs/two_inits_segment_unknown_size.webm"
+    );
+    snapshot_test!(
+        test_init_after_cluster_unknown_size,
+        "../inputs/init_after_cluster_unknown_size.webm"
+    );
 }
