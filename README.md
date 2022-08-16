@@ -230,7 +230,7 @@ Download prebuilt binaries for **Linux** on `x86_64` and `aarch64` from the [rel
 
 Download it somewhere accessible in your PATH and make it runnable:
 ```bash
-sudo curl -L https://github.com/cadubentzen/mkvdump/download/v0.1.0/mkvdump-linux-x86_64 -o /usr/local/bin/mkvdump
+sudo curl -L https://github.com/cadubentzen/mkvdump/releases/download/v0.1.0/mkvdump-linux-x86_64 -o /usr/local/bin/mkvdump
 sudo chmod +x /usr/local/bin/mkvdump
 ```
 
