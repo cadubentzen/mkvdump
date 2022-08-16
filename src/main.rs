@@ -3,27 +3,32 @@ use std::{
     io::{self, Read},
 };
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 
 use mkvdump::{parse_buffer_to_end, ElementTree};
 
-/// mkvdump
-#[derive(Parser, Debug)]
+/// Parse Matroska file and display result in serialized format.
+#[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
-    /// Name of the file to be parsed
+    /// Name of the MKV/WebM file to be parsed
     filename: String,
 
     /// Output format
-    #[clap(short, long, default_value = "yaml")]
-    format: String,
+    #[clap(value_enum, short, long, default_value = "yaml")]
+    format: Format,
 }
 
-fn print_element_trees(element_trees: &[ElementTree], format: &str) {
-    let serialized = if format == "json" {
-        serde_json::to_string_pretty(element_trees).unwrap()
-    } else {
-        serde_yaml::to_string(element_trees).unwrap()
+#[derive(ValueEnum, Clone, PartialEq, Eq)]
+enum Format {
+    Json,
+    Yaml,
+}
+
+fn print_element_trees(element_trees: &[ElementTree], format: &Format) {
+    let serialized = match format {
+        Format::Json => serde_json::to_string_pretty(element_trees).unwrap(),
+        Format::Yaml => serde_yaml::to_string(element_trees).unwrap(),
     };
     println!("{}", serialized);
 }

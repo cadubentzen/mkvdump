@@ -30,7 +30,6 @@ fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
     }
 
     let (input, varint_bytes) = take(num_bytes)(input)?;
-    // any efficient way to avoid this copy here?
     let mut value_buffer = [0u8; 4];
     value_buffer[(4 - varint_bytes.len())..].copy_from_slice(varint_bytes);
     let id = u32::from_be_bytes(value_buffer);
