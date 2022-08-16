@@ -43,13 +43,18 @@ jobs:
 
       - uses: actions/download-artifact@v3
 
+      - name: Rename files
+        run: |
+          cp mkvdump-x86_64/mkvdump-x86_64 mkvdump-linux-x86_64
+          cp mkvdump-aarch64/mkvdump-aarch64 mkvdump-linux-aarch64
+
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           draft: true
           files: |
-            mkvdump-x86_64
-            mkvdump-aarch64
+            mkvdump-linux-x86_64
+            mkvdump-linux-aarch64
 
   docker:
     runs-on: ubuntu-latest

@@ -7,6 +7,7 @@
 A command-line tool for debugging Matroska/WebM files in common formats.
 
 ```
+$ mkvdump --help
 mkvdump 0.1.0
 Carlos Bentzen <cadubentzen@gmail.com>
 Parse Matroska file and display result in serialized format
@@ -225,11 +226,11 @@ $ docker run -v /host-path:/media cadubentzen/mkvdump /media/sample.mkv
 
 ## Prebuilt binaries
 
-Download prebuilt binaries for Linux on `x86_64` and `aarch64` from the [release page](https://github.com/cadubentzen/mkvdump/releases).
+Download prebuilt binaries for **Linux** on `x86_64` and `aarch64` from the [release page](https://github.com/cadubentzen/mkvdump/releases).
 
 Download it somewhere accessible in your PATH and make it runnable:
 ```bash
-sudo curl -L https://github.com/cadubentzen/mkvdump/download/v0.1.0/mkvdump-x86_64 -o /usr/local/bin/mkvdump
+sudo curl -L https://github.com/cadubentzen/mkvdump/download/v0.1.0/mkvdump-linux-x86_64 -o /usr/local/bin/mkvdump
 sudo chmod +x /usr/local/bin/mkvdump
 ```
 
