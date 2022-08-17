@@ -209,6 +209,13 @@ Sample output:
 
 # Getting mkvdump
 
+## Cargo
+
+If you have `cargo` installed, you can install mkvdump from [crates.io](https://crates.io) with:
+```bash
+$ cargo install mkvdump
+```
+
 ## Docker
 
 To pull latest mkvdump from Dockerhub:
