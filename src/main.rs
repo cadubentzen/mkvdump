@@ -7,7 +7,6 @@ use clap::{Parser, ValueEnum};
 
 use mkvdump::{parse_buffer_to_end, ElementTree};
 
-/// Parse Matroska file and display result in serialized format.
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
@@ -17,6 +16,10 @@ struct Args {
     /// Output format
     #[clap(value_enum, short, long, default_value = "yaml")]
     format: Format,
+
+    /// Add element positions in the output
+    #[clap(short = 'p', long)]
+    show_element_positions: bool,
 }
 
 #[derive(ValueEnum, Clone, PartialEq, Eq)]
@@ -41,7 +44,7 @@ fn main() -> io::Result<()> {
     let mut buffer = Vec::<u8>::new();
     file.read_to_end(&mut buffer)?;
 
-    let element_trees = parse_buffer_to_end(&buffer);
+    let element_trees = parse_buffer_to_end(&buffer, args.show_element_positions);
 
     print_element_trees(&element_trees, &args.format);
 

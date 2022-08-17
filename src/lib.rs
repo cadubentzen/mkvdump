@@ -45,6 +45,8 @@ pub struct Header {
     pub body_size: Option<u64>,
     #[serde(serialize_with = "serialize_size")]
     pub size: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub position: Option<u64>,
 }
 
 fn serialize_size<S: Serializer>(size: &Option<u64>, s: S) -> Result<S::Ok, S::Error> {
@@ -62,6 +64,7 @@ impl Header {
             header_size,
             body_size: Some(body_size),
             size: Some(header_size as u64 + body_size),
+            position: None,
         }
     }
 
@@ -71,6 +74,7 @@ impl Header {
             header_size,
             body_size: None,
             size: None,
+            position: None,
         }
     }
 }
@@ -557,16 +561,30 @@ fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
     trees
 }
 
-pub fn parse_buffer_to_end(input: &[u8]) -> Vec<ElementTree> {
+fn parse_elements(input: &[u8], show_position: bool) -> Vec<Element> {
     let mut elements = Vec::<Element>::new();
     let mut read_buffer = input;
-    while let Ok((new_read_buffer, element)) = parse_element(read_buffer) {
+    let mut position = show_position.then_some(0);
+    while let Ok((new_read_buffer, mut element)) = parse_element(read_buffer) {
+        element.header.position = position;
+        position = position.map(|p| {
+            if let Body::Master = element.body {
+                p + element.header.header_size as u64
+            } else {
+                p + element.header.size.unwrap()
+            }
+        });
         elements.push(element);
         if new_read_buffer.is_empty() {
             break;
         }
         read_buffer = new_read_buffer;
     }
+    elements
+}
+
+pub fn parse_buffer_to_end(input: &[u8], show_position: bool) -> Vec<ElementTree> {
+    let elements = parse_elements(input, show_position);
     build_element_trees(&elements)
 }
 
@@ -1006,7 +1024,7 @@ mod tests {
         ($test_name:ident, $filename:expr) => {
             #[test]
             fn $test_name() {
-                insta::assert_yaml_snapshot!(parse_buffer_to_end(include_bytes!($filename)));
+                insta::assert_yaml_snapshot!(parse_buffer_to_end(include_bytes!($filename), false));
             }
         };
     }
@@ -1039,4 +1057,19 @@ mod tests {
         test_init_after_cluster_unknown_size,
         "../inputs/init_after_cluster_unknown_size.webm"
     );
+
+    #[test]
+    fn test_show_position() {
+        const INPUT: &[u8] = include_bytes!("../inputs/matroska-test-suite/test7.mkv");
+        let elements = parse_elements(INPUT, true);
+        for element in elements {
+            // Corrupted elements won't match as we ignore their ID due to invalid content.
+            if element.header.id == Id::Corrupted {
+                continue;
+            }
+            let (_, id_at_position) =
+                parse_id(&INPUT[element.header.position.unwrap() as usize..]).unwrap();
+            assert_eq!(id_at_position, element.header.id);
+        }
+    }
 }
