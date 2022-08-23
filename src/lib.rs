@@ -561,7 +561,7 @@ fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
     trees
 }
 
-fn parse_elements(input: &[u8], show_position: bool) -> Vec<Element> {
+pub fn parse_elements(input: &[u8], show_position: bool) -> Vec<Element> {
     let mut elements = Vec::<Element>::new();
     let mut read_buffer = input;
     let mut position = show_position.then_some(0);
