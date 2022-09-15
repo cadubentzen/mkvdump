@@ -8,7 +8,7 @@ A command-line tool for debugging Matroska/WebM files in common formats.
 
 ```
 $ mkvdump --help
-mkvdump 0.2.0
+mkvdump 0.3.1
 Carlos Bentzen <cadubentzen@gmail.com>
 MKV and WebM parser CLI tool
 
@@ -21,6 +21,7 @@ ARGS:
 OPTIONS:
     -f, --format <FORMAT>           Output format [default: yaml] [possible values: json, yaml]
     -h, --help                      Print help information
+    -l, --linear-output             Show output as a sequence, rather than a tree
     -p, --show-element-positions    Add element positions in the output
     -V, --version                   Print version information
 ```
@@ -238,7 +239,7 @@ Download prebuilt binaries for **Linux** on `x86_64` and `aarch64` from the [rel
 
 Download it somewhere accessible in your PATH and make it runnable:
 ```bash
-$ sudo curl -L https://github.com/cadubentzen/mkvdump/releases/download/v0.2.0/mkvdump-linux-x86_64 -o /usr/local/bin/mkvdump
+$ sudo curl -L https://github.com/cadubentzen/mkvdump/releases/download/v0.3.1/mkvdump-linux-x86_64 -o /usr/local/bin/mkvdump
 $ sudo chmod +x /usr/local/bin/mkvdump
 ```
 
