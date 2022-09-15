@@ -25,8 +25,8 @@ chrono = { version = "0.4", default-features = false, features = ["serde"] }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
-serde-xml-rs = "0.5"
-convert_case = "0.5"
+serde-xml-rs = "0.6"
+convert_case = "0.6"
 
 [dev-dependencies]
 insta = { version = "1.18.1", features = ["yaml"] }
