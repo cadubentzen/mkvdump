@@ -12,10 +12,10 @@ use serde::{Serialize, Serializer};
 
 mod ebml;
 mod elements;
-mod enumerations;
+pub mod enumerations;
 
-use crate::elements::{Id, Type};
-use crate::enumerations::Enumeration;
+pub use crate::elements::{Id, Type};
+pub use crate::enumerations::Enumeration;
 
 fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
     let (input, first_byte) = peek(take(1usize))(input)?;

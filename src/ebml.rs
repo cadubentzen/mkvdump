@@ -1,7 +1,8 @@
 macro_rules! ebml_elements {
-    ($(name = $element_name:ident, original_name = $original_name:expr, id = $id:expr, variant = $variant:ident;)+) => {
+    ($($(#[doc = $doc:expr])* name = $element_name:ident, original_name = $original_name:expr, id = $id:expr, variant = $variant:ident;)+) => {
         use serde::{Serialize, Serializer};
 
+        // Matroska Element Type.
         #[derive(Debug)]
         pub enum Type {
             Unsigned,
@@ -14,11 +15,17 @@ macro_rules! ebml_elements {
             Binary,
         }
 
+        /// Matroska Element ID.
         #[derive(Debug, PartialEq, Eq, Clone)]
         pub enum Id {
+            /// Unknown ID containing the value parsed.
             Unknown(u32),
+            /// Corrupted element. Used when there is a parsing error and a portion of the input is skipped.
             Corrupted,
-            $($element_name,)+
+            $(
+                $(#[doc = $doc])*
+                $element_name,
+            )+
         }
 
         impl Id {
@@ -62,7 +69,7 @@ macro_rules! ebml_elements {
 }
 
 macro_rules! ebml_enumerations {
-    ($($id:ident { $($variant:ident = $value:expr, original_label = $original_label:expr;)+ };)+) => {
+    ($($id:ident { $($(#[doc = $doc:expr])* $variant:ident = $value:expr, original_label = $original_label:expr;)+ };)+) => {
         use crate::elements::Id;
         use serde::Serialize;
 
@@ -70,6 +77,7 @@ macro_rules! ebml_enumerations {
             #[derive(Debug, PartialEq, Eq, Clone, Serialize)]
             pub enum $id {
                 $(
+                    $(#[doc = $doc])*
                     #[serde(rename = $original_label)]
                     $variant,
                 )+
@@ -85,9 +93,11 @@ macro_rules! ebml_enumerations {
             }
         )+
 
+        /// Enumeration of values for a given Matroska Element.
         #[derive(Debug, PartialEq, Eq, Clone, Serialize)]
         #[serde(untagged)]
         pub enum Enumeration {
+            /// Uknown variant, which simply carries the value.
             Unknown(u64),
             $($id($id),)+
         }

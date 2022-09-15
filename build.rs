@@ -139,9 +139,26 @@ fn create_elements_file(elements: &[Element]) -> std::io::Result<()> {
         id,
         variant,
         path: _,
-        details: _,
+        details,
     } in elements
     {
+        if let Some(details) = details {
+            macro_rules! write_comment_lines {
+                ($detail_type:path) => {
+                    for detail in details {
+                        if let $detail_type(detail) = detail {
+                            detail.text.split('\n').filter(|s| !s.is_empty()).for_each(
+                                |doc_line| writeln!(file, "    /// {}", doc_line).unwrap(),
+                            );
+                        }
+                    }
+                };
+            }
+
+            write_comment_lines!(ElementDetail::Documentation);
+            write_comment_lines!(ElementDetail::ImplementationNote);
+        }
+
         let enum_name = name.to_case(Case::Pascal);
         writeln!(
             file,
@@ -175,6 +192,15 @@ fn create_enumerations_file(elements: &[Element]) -> std::io::Result<()> {
                 if let ElementDetail::Restriction(restriction) = detail {
                     writeln!(file, "    {} {{", enum_name)?;
                     for enumeration in &restriction.enums {
+                        if let Some(docs) = &enumeration.documentation {
+                            for doc in docs {
+                                doc.text.split('\n').filter(|s| !s.is_empty()).for_each(
+                                    |doc_line| writeln!(file, "        /// {}", doc_line).unwrap(),
+                                );
+                            }
+                        } else {
+                            writeln!(file, "        /// {}", enumeration.label)?;
+                        }
                         let label = apply_label_quirks(&enumeration.label, &mut reserved_index);
                         writeln!(
                             file,

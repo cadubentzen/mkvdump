@@ -3,204 +3,357 @@
 use crate::ebml::ebml_enumerations;
 ebml_enumerations! {
     ChapterTranslateCodec {
+        /// Chapter commands using the Matroska Script codec.
         MatroskaScript = 0, original_label = "Matroska Script";
+        /// Chapter commands using the DVD-like codec.
         DvdMenu = 1, original_label = "DVD-menu";
     };
     TrackType {
+        /// An image.
         Video = 1, original_label = "video";
+        /// Audio samples.
         Audio = 2, original_label = "audio";
+        /// A mix of different other TrackType. The codec needs to define how the `Matroska Player` should interpret such data.
         Complex = 3, original_label = "complex";
+        /// An image to be rendered over the video track(s).
         Logo = 16, original_label = "logo";
+        /// Subtitle or closed caption data to be rendered over the video track(s).
         Subtitle = 17, original_label = "subtitle";
+        /// Interactive button(s) to be rendered over the video track(s).
         Buttons = 18, original_label = "buttons";
+        /// Metadata used to control the player of the `Matroska Player`.
         Control = 32, original_label = "control";
+        /// Timed metadata that can be passed on to the `Matroska Player`.
         Metadata = 33, original_label = "metadata";
     };
     TrackTranslateCodec {
+        /// Chapter commands using the Matroska Script codec.
         MatroskaScript = 0, original_label = "Matroska Script";
+        /// Chapter commands using the DVD-like codec.
         DvdMenu = 1, original_label = "DVD-menu";
     };
     FlagInterlaced {
+        /// Unknown status.
+        /// This value **SHOULD** be avoided.
         Undetermined = 0, original_label = "undetermined";
+        /// Interlaced frames.
         Interlaced = 1, original_label = "interlaced";
+        /// No interlacing.
         Progressive = 2, original_label = "progressive";
     };
     FieldOrder {
+        /// Interlaced frames.
+        /// This value **SHOULD** be avoided, setting FlagInterlaced to 2 is sufficient.
         Progressive = 0, original_label = "progressive";
+        /// Top field displayed first. Top field stored first.
         Tff = 1, original_label = "tff";
+        /// Unknown field order.
+        /// This value **SHOULD** be avoided.
         Undetermined = 2, original_label = "undetermined";
+        /// Bottom field displayed first. Bottom field stored first.
         Bff = 6, original_label = "bff";
+        /// Top field displayed first. Fields are interleaved in storage
+        /// with the top line of the top field stored first.
         BffSwapped = 9, original_label = "bff(swapped)";
+        /// Bottom field displayed first. Fields are interleaved in storage
+        /// with the top line of the top field stored first.
         TffSwapped = 14, original_label = "tff(swapped)";
     };
     StereoMode {
+        /// mono
         Mono = 0, original_label = "mono";
+        /// side by side (left eye first)
         SideBySideLeftEyeFirst = 1, original_label = "side by side (left eye first)";
+        /// top - bottom (right eye is first)
         TopBottomRightEyeIsFirst = 2, original_label = "top - bottom (right eye is first)";
+        /// top - bottom (left eye is first)
         TopBottomLeftEyeIsFirst = 3, original_label = "top - bottom (left eye is first)";
+        /// checkboard (right eye is first)
         CheckboardRightEyeIsFirst = 4, original_label = "checkboard (right eye is first)";
+        /// checkboard (left eye is first)
         CheckboardLeftEyeIsFirst = 5, original_label = "checkboard (left eye is first)";
+        /// row interleaved (right eye is first)
         RowInterleavedRightEyeIsFirst = 6, original_label = "row interleaved (right eye is first)";
+        /// row interleaved (left eye is first)
         RowInterleavedLeftEyeIsFirst = 7, original_label = "row interleaved (left eye is first)";
+        /// column interleaved (right eye is first)
         ColumnInterleavedRightEyeIsFirst = 8, original_label = "column interleaved (right eye is first)";
+        /// column interleaved (left eye is first)
         ColumnInterleavedLeftEyeIsFirst = 9, original_label = "column interleaved (left eye is first)";
+        /// anaglyph (cyan/red)
         AnaglyphCyanRed = 10, original_label = "anaglyph (cyan/red)";
+        /// side by side (right eye first)
         SideBySideRightEyeFirst = 11, original_label = "side by side (right eye first)";
+        /// anaglyph (green/magenta)
         AnaglyphGreenMagenta = 12, original_label = "anaglyph (green/magenta)";
+        /// both eyes laced in one Block (left eye is first)
         BothEyesLacedInOneBlockLeftEyeIsFirst = 13, original_label = "both eyes laced in one Block (left eye is first)";
+        /// both eyes laced in one Block (right eye is first)
         BothEyesLacedInOneBlockRightEyeIsFirst = 14, original_label = "both eyes laced in one Block (right eye is first)";
     };
     AlphaMode {
+        /// The BlockAdditional Element with BlockAddID of "1" does not exist or **SHOULD NOT** be considered as containing such data.
         None = 0, original_label = "none";
+        /// The BlockAdditional Element with BlockAddID of "1" contains alpha channel data.
         Present = 1, original_label = "present";
     };
     OldStereoMode {
+        /// mono
         Mono = 0, original_label = "mono";
+        /// right eye
         RightEye = 1, original_label = "right eye";
+        /// left eye
         LeftEye = 2, original_label = "left eye";
+        /// both eyes
         BothEyes = 3, original_label = "both eyes";
     };
     DisplayUnit {
+        /// pixels
         Pixels = 0, original_label = "pixels";
+        /// centimeters
         Centimeters = 1, original_label = "centimeters";
+        /// inches
         Inches = 2, original_label = "inches";
+        /// display aspect ratio
         DisplayAspectRatio = 3, original_label = "display aspect ratio";
+        /// unknown
         Unknown = 4, original_label = "unknown";
     };
     AspectRatioType {
+        /// free resizing
         FreeResizing = 0, original_label = "free resizing";
+        /// keep aspect ratio
         KeepAspectRatio = 1, original_label = "keep aspect ratio";
+        /// fixed
         Fixed = 2, original_label = "fixed";
     };
     MatrixCoefficients {
+        /// Identity
         Identity = 0, original_label = "Identity";
+        /// ITU-R BT.709
         ItuRBt709 = 1, original_label = "ITU-R BT.709";
+        /// unspecified
         Unspecified = 2, original_label = "unspecified";
+        /// reserved
         Reserved1 = 3, original_label = "reserved";
+        /// US FCC 73.682
         UsFcc73682 = 4, original_label = "US FCC 73.682";
+        /// ITU-R BT.470BG
         ItuRBt470Bg = 5, original_label = "ITU-R BT.470BG";
+        /// SMPTE 170M
         Smpte170M = 6, original_label = "SMPTE 170M";
+        /// SMPTE 240M
         Smpte240M = 7, original_label = "SMPTE 240M";
+        /// YCoCg
         YCoCg = 8, original_label = "YCoCg";
+        /// BT2020 Non-constant Luminance
         Bt2020NonConstantLuminance = 9, original_label = "BT2020 Non-constant Luminance";
+        /// BT2020 Constant Luminance
         Bt2020ConstantLuminance = 10, original_label = "BT2020 Constant Luminance";
+        /// SMPTE ST 2085
         SmpteSt2085 = 11, original_label = "SMPTE ST 2085";
+        /// Chroma-derived Non-constant Luminance
         ChromaDerivedNonConstantLuminance = 12, original_label = "Chroma-derived Non-constant Luminance";
+        /// Chroma-derived Constant Luminance
         ChromaDerivedConstantLuminance = 13, original_label = "Chroma-derived Constant Luminance";
+        /// ITU-R BT.2100-0
         ItuRBt21000 = 14, original_label = "ITU-R BT.2100-0";
     };
     ChromaSitingHorz {
+        /// unspecified
         Unspecified = 0, original_label = "unspecified";
+        /// left collocated
         LeftCollocated = 1, original_label = "left collocated";
+        /// half
         Half = 2, original_label = "half";
     };
     ChromaSitingVert {
+        /// unspecified
         Unspecified = 0, original_label = "unspecified";
+        /// top collocated
         TopCollocated = 1, original_label = "top collocated";
+        /// half
         Half = 2, original_label = "half";
     };
     Range {
+        /// unspecified
         Unspecified = 0, original_label = "unspecified";
+        /// broadcast range
         BroadcastRange = 1, original_label = "broadcast range";
+        /// full range (no clipping)
         FullRangeNoClipping = 2, original_label = "full range (no clipping)";
+        /// defined by MatrixCoefficients / TransferCharacteristics
         DefinedByMatrixCoefficientsTransferCharacteristics = 3, original_label = "defined by MatrixCoefficients / TransferCharacteristics";
     };
     TransferCharacteristics {
+        /// reserved
         Reserved1 = 0, original_label = "reserved";
+        /// ITU-R BT.709
         ItuRBt709 = 1, original_label = "ITU-R BT.709";
+        /// unspecified
         Unspecified = 2, original_label = "unspecified";
+        /// reserved
         Reserved2 = 3, original_label = "reserved";
+        /// Gamma 2.2 curve - BT.470M
         Gamma22CurveBt470M = 4, original_label = "Gamma 2.2 curve - BT.470M";
+        /// Gamma 2.8 curve - BT.470BG
         Gamma28CurveBt470Bg = 5, original_label = "Gamma 2.8 curve - BT.470BG";
+        /// SMPTE 170M
         Smpte170M = 6, original_label = "SMPTE 170M";
+        /// SMPTE 240M
         Smpte240M = 7, original_label = "SMPTE 240M";
+        /// Linear
         Linear = 8, original_label = "Linear";
+        /// Log
         Log = 9, original_label = "Log";
+        /// Log Sqrt
         LogSqrt = 10, original_label = "Log Sqrt";
+        /// IEC 61966-2-4
         Iec6196624 = 11, original_label = "IEC 61966-2-4";
+        /// ITU-R BT.1361 Extended Colour Gamut
         ItuRBt1361ExtendedColourGamut = 12, original_label = "ITU-R BT.1361 Extended Colour Gamut";
+        /// IEC 61966-2-1
         Iec6196621 = 13, original_label = "IEC 61966-2-1";
+        /// ITU-R BT.2020 10 bit
         ItuRBt202010Bit = 14, original_label = "ITU-R BT.2020 10 bit";
+        /// ITU-R BT.2020 12 bit
         ItuRBt202012Bit = 15, original_label = "ITU-R BT.2020 12 bit";
+        /// ITU-R BT.2100 Perceptual Quantization
         ItuRBt2100PerceptualQuantization = 16, original_label = "ITU-R BT.2100 Perceptual Quantization";
+        /// SMPTE ST 428-1
         SmpteSt4281 = 17, original_label = "SMPTE ST 428-1";
+        /// ARIB STD-B67 (HLG)
         AribStdB67Hlg = 18, original_label = "ARIB STD-B67 (HLG)";
     };
     Primaries {
+        /// reserved
         Reserved1 = 0, original_label = "reserved";
+        /// ITU-R BT.709
         ItuRBt709 = 1, original_label = "ITU-R BT.709";
+        /// unspecified
         Unspecified = 2, original_label = "unspecified";
+        /// reserved
         Reserved2 = 3, original_label = "reserved";
+        /// ITU-R BT.470M
         ItuRBt470M = 4, original_label = "ITU-R BT.470M";
+        /// ITU-R BT.470BG - BT.601 625
         ItuRBt470BgBt601625 = 5, original_label = "ITU-R BT.470BG - BT.601 625";
+        /// ITU-R BT.601 525 - SMPTE 170M
         ItuRBt601525Smpte170M = 6, original_label = "ITU-R BT.601 525 - SMPTE 170M";
+        /// SMPTE 240M
         Smpte240M = 7, original_label = "SMPTE 240M";
+        /// FILM
         Film = 8, original_label = "FILM";
+        /// ITU-R BT.2020
         ItuRBt2020 = 9, original_label = "ITU-R BT.2020";
+        /// SMPTE ST 428-1
         SmpteSt4281 = 10, original_label = "SMPTE ST 428-1";
+        /// SMPTE RP 432-2
         SmpteRp4322 = 11, original_label = "SMPTE RP 432-2";
+        /// SMPTE EG 432-2
         SmpteEg4322 = 12, original_label = "SMPTE EG 432-2";
+        /// EBU Tech. 3213-E - JEDEC P22 phosphors
         EbuTech3213EJedecP22Phosphors = 22, original_label = "EBU Tech. 3213-E - JEDEC P22 phosphors";
     };
     ProjectionType {
+        /// rectangular
         Rectangular = 0, original_label = "rectangular";
+        /// equirectangular
         Equirectangular = 1, original_label = "equirectangular";
+        /// cubemap
         Cubemap = 2, original_label = "cubemap";
+        /// mesh
         Mesh = 3, original_label = "mesh";
     };
     TrackPlaneType {
+        /// left eye
         LeftEye = 0, original_label = "left eye";
+        /// right eye
         RightEye = 1, original_label = "right eye";
+        /// background
         Background = 2, original_label = "background";
     };
     ContentEncodingScope {
+        /// All frame contents, excluding lacing data.
         Block = 1, original_label = "Block";
+        /// The track's private data.
         Private = 2, original_label = "Private";
+        /// The next ContentEncoding (next `ContentEncodingOrder`. Either the data inside `ContentCompression` and/or `ContentEncryption`).
+        /// This value **SHOULD NOT** be used.
         Next = 4, original_label = "Next";
     };
     ContentEncodingType {
+        /// Compression
         Compression = 0, original_label = "Compression";
+        /// Encryption
         Encryption = 1, original_label = "Encryption";
     };
     ContentCompAlgo {
+        /// zlib compression [@!RFC1950].
         Zlib = 0, original_label = "zlib";
+        /// bzip2 compression [@!BZIP2], **SHOULD NOT** be used; see usage notes.
         Bzlib = 1, original_label = "bzlib";
+        /// Lempel-Ziv-Oberhumer compression [@!LZO], **SHOULD NOT** be used; see usage notes.
         Lzo1X = 2, original_label = "lzo1x";
+        /// Octets in `ContentCompSettings` ((#contentcompsettings-element)) have been stripped from each frame.
         HeaderStripping = 3, original_label = "Header Stripping";
     };
     ContentEncAlgo {
+        /// The data are not encrypted.
         NotEncrypted = 0, original_label = "Not encrypted";
+        /// Data Encryption Standard (DES) [@!FIPS.46-3].
         Des = 1, original_label = "DES";
+        /// Triple Data Encryption Algorithm [@!SP.800-67].
         TripleDes = 2, original_label = "3DES";
+        /// Twofish Encryption Algorithm [@!Twofish].
         Twofish = 3, original_label = "Twofish";
+        /// Blowfish Encryption Algorithm [@!Blowfish].
         Blowfish = 4, original_label = "Blowfish";
+        /// Advanced Encryption Standard (AES) [@!FIPS.197].
         Aes = 5, original_label = "AES";
     };
     AesSettingsCipherMode {
+        /// Counter [@!SP.800-38A].
         AesCtr = 1, original_label = "AES-CTR";
+        /// Cipher Block Chaining [@!SP.800-38A].
         AesCbc = 2, original_label = "AES-CBC";
     };
     ContentSigAlgo {
+        /// Not signed
         NotSigned = 0, original_label = "Not signed";
+        /// RSA
         Rsa = 1, original_label = "RSA";
     };
     ContentSigHashAlgo {
+        /// Not signed
         NotSigned = 0, original_label = "Not signed";
+        /// SHA1-160
         Sha1160 = 1, original_label = "SHA1-160";
+        /// MD5
         Md5 = 2, original_label = "MD5";
     };
     ChapProcessTime {
+        /// during the whole chapter
         DuringTheWholeChapter = 0, original_label = "during the whole chapter";
+        /// before starting playback
         BeforeStartingPlayback = 1, original_label = "before starting playback";
+        /// after playback of the chapter
         AfterPlaybackOfTheChapter = 2, original_label = "after playback of the chapter";
     };
     TargetTypeValue {
+        /// The highest hierarchical level that tags can describe.
         Collection = 70, original_label = "COLLECTION";
+        /// A list of lower levels grouped together.
         EditionIssueVolumeOpusSeasonSequel = 60, original_label = "EDITION / ISSUE / VOLUME / OPUS / SEASON / SEQUEL";
+        /// The most common grouping level of music and video (equals to an episode for TV series).
         AlbumOperaConcertMovieEpisode = 50, original_label = "ALBUM / OPERA / CONCERT / MOVIE / EPISODE";
+        /// When an album or episode has different logical parts.
         PartSession = 40, original_label = "PART / SESSION";
+        /// The common parts of an album or movie.
         TrackSongChapter = 30, original_label = "TRACK / SONG / CHAPTER";
+        /// Corresponds to parts of a track for audio (like a movement).
         SubtrackPartMovementScene = 20, original_label = "SUBTRACK / PART / MOVEMENT / SCENE";
+        /// The lowest hierarchy found in music or movies.
         Shot = 10, original_label = "SHOT";
     };
 }
