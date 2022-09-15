@@ -245,32 +245,23 @@ const SYNC_ELEMENT_IDS: &[Id] = &[
 ];
 
 fn find_valid_element(input: &[u8]) -> IResult<&[u8], Element> {
-    let mut min_offset = None;
-    for sync_id in SYNC_ELEMENT_IDS {
-        let id_value = sync_id.get_value().unwrap();
-        let id_bytes = id_value.to_be_bytes();
-        let lookahead = input.len().min(min_offset.unwrap_or(usize::MAX));
-        for (offset, window) in input[..lookahead].windows(id_bytes.len()).enumerate() {
+    const SYNC_ID_LEN: usize = 4;
+    for (offset, window) in input.windows(SYNC_ID_LEN).enumerate() {
+        for sync_id in SYNC_ELEMENT_IDS {
+            let id_value = sync_id.get_value().unwrap();
+            let id_bytes = id_value.to_be_bytes();
             if window == id_bytes {
-                let min_offset = min_offset.get_or_insert(offset);
-                if offset < *min_offset {
-                    *min_offset = offset;
-                }
-                break;
+                return Ok((
+                    &input[offset..],
+                    Element {
+                        header: Header::new(Id::corrupted(), offset, 0),
+                        body: Body::Binary(BinaryValue::Corrupted),
+                    },
+                ));
             }
         }
     }
-    if let Some(offset) = min_offset {
-        Ok((
-            &input[offset..],
-            Element {
-                header: Header::new(Id::corrupted(), offset, 0),
-                body: Body::Binary(BinaryValue::Corrupted),
-            },
-        ))
-    } else {
-        Err(Err::Incomplete(Needed::Unknown))
-    }
+    Err(Err::Incomplete(Needed::Unknown))
 }
 
 fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
