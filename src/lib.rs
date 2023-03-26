@@ -332,14 +332,14 @@ fn parse_binary<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Vec<u
 
 fn parse_date<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], DateTime<Utc>> {
     let (input, timestamp_nanos_to_2001) = parse_int::<i64>(header, input)?;
-    let nanos_2001 = NaiveDate::from_ymd(2001, 1, 1)
-        .and_hms(0, 0, 0)
+    let nanos_2001 = NaiveDate::from_ymd_opt(2001, 1, 1).unwrap()
+        .and_hms_opt(0, 0, 0).unwrap()
         .timestamp_nanos();
     let timestamp_seconds_to_1970 = (timestamp_nanos_to_2001 + nanos_2001) / 1_000_000_000;
     Ok((
         input,
         DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp(timestamp_seconds_to_1970, 0),
+            NaiveDateTime::from_timestamp_opt(timestamp_seconds_to_1970, 0).unwrap(),
             Utc,
         ),
     ))
@@ -763,7 +763,7 @@ mod tests {
     #[test]
     fn test_parse_date() {
         let expected_datetime =
-            DateTime::<Utc>::from_utc(NaiveDate::from_ymd(2022, 8, 11).and_hms(8, 27, 15), Utc);
+            DateTime::<Utc>::from_utc(NaiveDate::from_ymd_opt(2022, 8, 11).unwrap().and_hms_opt(8, 27, 15).unwrap(), Utc);
         assert_eq!(
             parse_date(
                 &Header::new(Id::DateUtc, 1, 8),
