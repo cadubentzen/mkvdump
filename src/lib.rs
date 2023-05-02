@@ -332,8 +332,10 @@ fn parse_binary<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Vec<u
 
 fn parse_date<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], DateTime<Utc>> {
     let (input, timestamp_nanos_to_2001) = parse_int::<i64>(header, input)?;
-    let nanos_2001 = NaiveDate::from_ymd_opt(2001, 1, 1).unwrap()
-        .and_hms_opt(0, 0, 0).unwrap()
+    let nanos_2001 = NaiveDate::from_ymd_opt(2001, 1, 1)
+        .unwrap()
+        .and_hms_opt(0, 0, 0)
+        .unwrap()
         .timestamp_nanos();
     let timestamp_seconds_to_1970 = (timestamp_nanos_to_2001 + nanos_2001) / 1_000_000_000;
     Ok((
@@ -427,7 +429,7 @@ fn parse_block(input: &[u8]) -> IResult<&[u8], Block> {
 
     let invisible = is_invisible(flags);
     let lacing = get_lacing(flags);
-    let (input, num_frames) = if lacing != None {
+    let (input, num_frames) = if lacing.is_some() {
         let (input, next_byte) = take(1usize)(input)?;
         let num_frames = next_byte[0];
         (input, Some(num_frames + 1))
@@ -458,7 +460,7 @@ fn parse_simple_block(input: &[u8]) -> IResult<&[u8], SimpleBlock> {
     let invisible = is_invisible(flags);
     let lacing = get_lacing(flags);
     let discardable = (flags & 0b1) != 0;
-    let (input, num_frames) = if lacing != None {
+    let (input, num_frames) = if lacing.is_some() {
         let (input, next_byte) = take(1usize)(input)?;
         let num_frames = next_byte[0];
         (input, Some(num_frames + 1))
@@ -762,8 +764,13 @@ mod tests {
 
     #[test]
     fn test_parse_date() {
-        let expected_datetime =
-            DateTime::<Utc>::from_utc(NaiveDate::from_ymd_opt(2022, 8, 11).unwrap().and_hms_opt(8, 27, 15).unwrap(), Utc);
+        let expected_datetime = DateTime::<Utc>::from_utc(
+            NaiveDate::from_ymd_opt(2022, 8, 11)
+                .unwrap()
+                .and_hms_opt(8, 27, 15)
+                .unwrap(),
+            Utc,
+        );
         assert_eq!(
             parse_date(
                 &Header::new(Id::DateUtc, 1, 8),
