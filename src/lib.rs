@@ -9,6 +9,7 @@ use nom::{
     Err, IResult,
 };
 use serde::{Serialize, Serializer};
+use serde_with::skip_serializing_none;
 
 mod ebml;
 mod elements;
@@ -37,15 +38,16 @@ fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
     Ok((input, Id::new(id)))
 }
 
+#[skip_serializing_none]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Header {
     pub id: Id,
     pub header_size: usize,
     #[serde(skip_serializing)]
     pub body_size: Option<u64>,
+    #[serialize_always]
     #[serde(serialize_with = "serialize_size")]
     pub size: Option<u64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub position: Option<u64>,
 }
 
@@ -149,19 +151,19 @@ enum Lacing {
 }
 
 // https://www.matroska.org/technical/basics.html#block-structure
+#[skip_serializing_none]
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Block {
     track_number: u64,
     timestamp: i16,
     #[serde(skip_serializing_if = "Not::not")]
     invisible: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
     lacing: Option<Lacing>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     num_frames: Option<u8>,
 }
 
 // https://www.matroska.org/technical/basics.html#simpleblock-structure
+#[skip_serializing_none]
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct SimpleBlock {
     track_number: u64,
@@ -170,11 +172,9 @@ pub struct SimpleBlock {
     keyframe: bool,
     #[serde(skip_serializing_if = "Not::not")]
     invisible: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
     lacing: Option<Lacing>,
     #[serde(skip_serializing_if = "Not::not")]
     discardable: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
     num_frames: Option<u8>,
 }
 
