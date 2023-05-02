@@ -1,5 +1,5 @@
 macro_rules! ebml_elements {
-    ($($(#[doc = $doc:expr])* name = $element_name:ident, original_name = $original_name:expr, id = $id:expr, variant = $variant:ident;)+) => {
+    ($($(#[doc = $doc:literal])* name = $element_name:ident, original_name = $original_name:expr, id = $id:expr, variant = $variant:ident;)+) => {
         use serde::{Serialize, Serializer};
 
         // Matroska Element Type.
