@@ -18,4 +18,6 @@ pub enum Error {
     ForbiddenFloatSize,
     #[error("valid element not found")]
     ValidElementNotFound,
+    #[error("missing track number")]
+    MissingTrackNumber,
 }

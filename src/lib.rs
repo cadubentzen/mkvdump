@@ -318,7 +318,7 @@ fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
 }
 
 fn parse_string<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], String> {
-    let body_size = header.body_size.expect("Strings need a known body size");
+    let body_size = header.body_size.ok_or(Error::ForbiddenUnknownSize)?;
     let (input, string_bytes) = take(body_size)(input)?;
     let value = String::from_utf8(string_bytes.to_vec())?;
 
@@ -329,7 +329,7 @@ fn parse_string<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Strin
 }
 
 fn parse_binary<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Vec<u8>> {
-    let body_size = header.body_size.expect("Binaries need a known body size");
+    let body_size = header.body_size.ok_or(Error::ForbiddenUnknownSize)?;
 
     let (input, bytes) = take(body_size)(input)?;
     let value = Vec::from(bytes);
@@ -374,7 +374,7 @@ fn parse_int<'a, T: Integer64FromBigEndianBytes>(
     header: &Header,
     input: &'a [u8],
 ) -> IResult<&'a [u8], T> {
-    let body_size = header.body_size.expect("Integers need a known body size");
+    let body_size = header.body_size.ok_or(Error::ForbiddenUnknownSize)?;
     if body_size > 8 {
         return Err(Error::ForbiddenIntegerSize);
     }
@@ -389,7 +389,7 @@ fn parse_int<'a, T: Integer64FromBigEndianBytes>(
 }
 
 fn parse_float<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], f64> {
-    let body_size = header.body_size.expect("Floats need a known body size");
+    let body_size = header.body_size.ok_or(Error::ForbiddenUnknownSize)?;
 
     if body_size == 4 {
         let (input, float_bytes) = take(body_size)(input)?;
@@ -427,7 +427,7 @@ fn get_lacing(flags: u8) -> Option<Lacing> {
 
 fn parse_block(input: &[u8]) -> IResult<&[u8], Block> {
     let (input, track_number) = parse_varint(input)?;
-    let track_number = track_number.expect("Blocks need a known track number");
+    let track_number = track_number.ok_or(Error::MissingTrackNumber)?;
     let (input, timestamp) = parse_i16(input)?;
     let (input, flags) = take(1usize)(input)?;
     let flags = flags[0];
@@ -456,7 +456,7 @@ fn parse_block(input: &[u8]) -> IResult<&[u8], Block> {
 
 fn parse_simple_block(input: &[u8]) -> IResult<&[u8], SimpleBlock> {
     let (input, track_number) = parse_varint(input)?;
-    let track_number = track_number.expect("SimpleBlocks need a known track number");
+    let track_number = track_number.ok_or(Error::MissingTrackNumber)?;
     let (input, timestamp) = parse_i16(input)?;
     let (input, flags) = take(1usize)(input)?;
     let flags = flags[0];
@@ -593,6 +593,7 @@ mod tests {
     use super::*;
 
     const EMPTY: &[u8] = &[];
+    const UNKNOWN_VARINT: &[u8] = &[0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
 
     #[test]
     fn test_count_leading_zero_bits() {
@@ -636,7 +637,6 @@ mod tests {
         const INVALID_VARINT: &[u8] = &[0x00, 0xAC];
         assert_eq!(parse_varint(INVALID_VARINT), Err(Error::InvalidVarint));
 
-        const UNKNOWN_VARINT: &[u8] = &[0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
         assert_eq!(parse_varint(UNKNOWN_VARINT), Ok((EMPTY, None)));
     }
 
@@ -662,6 +662,11 @@ mod tests {
                 &[0x77, 0x65, 0x62, 0x6D, 0x00, 0x00]
             ),
             Ok((EMPTY, "webm".to_string()))
+        );
+
+        assert_eq!(
+            parse_string(&Header::with_unknown_size(Id::DocType, 3), EMPTY),
+            Err(Error::ForbiddenUnknownSize)
         );
     }
 
@@ -727,7 +732,15 @@ mod tests {
         assert_eq!(
             parse_int(&Header::new(Id::EbmlVersion, 3, 1), &[0x01]),
             Ok((EMPTY, 1u64))
-        )
+        );
+        assert_eq!(
+            parse_int::<u64>(&Header::with_unknown_size(Id::EbmlVersion, 3), EMPTY),
+            Err(Error::ForbiddenUnknownSize)
+        );
+        assert_eq!(
+            parse_int::<i64>(&Header::with_unknown_size(Id::EbmlVersion, 3), EMPTY),
+            Err(Error::ForbiddenUnknownSize)
+        );
     }
 
     #[test]
@@ -751,6 +764,10 @@ mod tests {
             parse_float(&Header::new(Id::Duration, 3, 7), EMPTY),
             Err(Error::ForbiddenFloatSize)
         );
+        assert_eq!(
+            parse_float(&Header::with_unknown_size(Id::Duration, 3), EMPTY),
+            Err(Error::ForbiddenUnknownSize)
+        );
     }
 
     #[test]
@@ -758,7 +775,11 @@ mod tests {
         assert_eq!(
             parse_binary(&Header::new(Id::SeekId, 3, 4), &[0x15, 0x49, 0xA9, 0x66]),
             Ok((EMPTY, vec![0x15, 0x49, 0xA9, 0x66]))
-        )
+        );
+        assert_eq!(
+            parse_binary(&Header::with_unknown_size(Id::SeekId, 3), EMPTY),
+            Err(Error::ForbiddenUnknownSize)
+        );
     }
 
     #[test]
@@ -890,7 +911,9 @@ mod tests {
                     num_frames: None
                 }
             ))
-        )
+        );
+
+        assert_eq!(parse_block(UNKNOWN_VARINT), Err(Error::MissingTrackNumber));
     }
 
     #[test]
@@ -909,7 +932,12 @@ mod tests {
                     num_frames: None,
                 }
             ))
-        )
+        );
+
+        assert_eq!(
+            parse_simple_block(UNKNOWN_VARINT),
+            Err(Error::MissingTrackNumber)
+        );
     }
 
     #[test]
