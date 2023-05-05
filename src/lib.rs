@@ -418,11 +418,10 @@ fn is_invisible(flags: u8) -> bool {
 
 fn get_lacing(flags: u8) -> Option<Lacing> {
     match (flags & (0b110)) >> 1 {
-        0b00 => None,
         0b01 => Some(Lacing::Xiph),
         0b11 => Some(Lacing::Ebml),
         0b10 => Some(Lacing::FixedSize),
-        _ => unreachable!(),
+        _ => None,
     }
 }
 
