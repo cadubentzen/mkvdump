@@ -491,6 +491,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "serde_yaml",
+ "thiserror",
 ]
 
 [[package]]

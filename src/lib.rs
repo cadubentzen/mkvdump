@@ -1,22 +1,28 @@
 use std::ops::Not;
 
 use chrono::prelude::*;
-use nom::Needed;
-use nom::{
-    bytes::streaming::take,
-    combinator::peek,
-    error::{Error, ErrorKind},
-    Err, IResult,
-};
+use nom::combinator::peek;
+use nom::ToUsize;
 use serde::{Serialize, Serializer};
 use serde_with::skip_serializing_none;
 
 mod ebml;
 mod elements;
 pub mod enumerations;
+mod error;
 
 pub use crate::elements::{Id, Type};
 pub use crate::enumerations::Enumeration;
+pub use error::Error;
+
+pub type Result<T> = std::result::Result<T, Error>;
+type IResult<T, O> = Result<(T, O)>;
+
+fn take<'a>(
+    len: impl ToUsize,
+) -> impl Fn(&'a [u8]) -> std::result::Result<(&'a [u8], &'a [u8]), nom::Err<()>> {
+    nom::bytes::streaming::take(len)
+}
 
 fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
     let (input, first_byte) = peek(take(1usize))(input)?;
@@ -26,8 +32,7 @@ fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
 
     // IDs can only have up to 4 bytes in Matroska
     if num_bytes > 4 {
-        eprintln!("Invalid ID with more than 4 bytes");
-        return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
+        return Err(Error::InvalidId);
     }
 
     let (input, varint_bytes) = take(num_bytes)(input)?;
@@ -51,7 +56,7 @@ pub struct Header {
     pub position: Option<u64>,
 }
 
-fn serialize_size<S: Serializer>(size: &Option<u64>, s: S) -> Result<S::Ok, S::Error> {
+fn serialize_size<S: Serializer>(size: &Option<u64>, s: S) -> std::result::Result<S::Ok, S::Error> {
     if let Some(size) = size {
         s.serialize_u64(*size)
     } else {
@@ -99,7 +104,7 @@ fn parse_varint(first_input: &[u8]) -> IResult<&[u8], Option<u64>> {
 
     // Maximum 8 bytes, i.e. first byte can't be 0
     if vint_prefix_size > 8 {
-        return Err(Err::Failure(Error::new(first_input, ErrorKind::Fail)));
+        return Err(Error::InvalidVarint);
     }
 
     let (input, varint_bytes) = take(vint_prefix_size)(input)?;
@@ -129,7 +134,7 @@ fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
     // Also mentioned in https://www.w3.org/TR/mse-byte-stream-format-webm/
     if body_size.is_none() && id != Id::Segment && id != Id::Cluster {
         eprintln!("Unknown sizes are only supported in Segment and Cluster elements");
-        return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
+        return Err(Error::ForbiddenUnknownSize);
     }
 
     let header_size = initial_len - input.len();
@@ -190,7 +195,10 @@ pub enum BinaryValue {
     Corrupted,
 }
 
-fn serialize_short_payloads<S: Serializer>(payload: &[u8], s: S) -> Result<S::Ok, S::Error> {
+fn serialize_short_payloads<S: Serializer>(
+    payload: &[u8],
+    s: S,
+) -> std::result::Result<S::Ok, S::Error> {
     const MAX_LENGTH: usize = 64;
     if payload.len() <= MAX_LENGTH {
         let string_values = payload
@@ -261,7 +269,7 @@ fn find_valid_element(input: &[u8]) -> IResult<&[u8], Element> {
             }
         }
     }
-    Err(Err::Incomplete(Needed::Unknown))
+    Err(Error::ValidElementNotFound)
 }
 
 fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
@@ -312,8 +320,7 @@ fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
 fn parse_string<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], String> {
     let body_size = header.body_size.expect("Strings need a known body size");
     let (input, string_bytes) = take(body_size)(input)?;
-    let value = String::from_utf8(string_bytes.to_vec())
-        .map_err(|_| Err::Failure(Error::new(input, ErrorKind::Fail)))?;
+    let value = String::from_utf8(string_bytes.to_vec())?;
 
     // Remove trimming null characters
     let value = value.trim_end_matches('\0').to_string();
@@ -369,8 +376,7 @@ fn parse_int<'a, T: Integer64FromBigEndianBytes>(
 ) -> IResult<&'a [u8], T> {
     let body_size = header.body_size.expect("Integers need a known body size");
     if body_size > 8 {
-        eprintln!("Integer body size {} > 8", body_size);
-        return Err(Err::Failure(Error::new(input, ErrorKind::Fail)));
+        return Err(Error::ForbiddenIntegerSize);
     }
 
     let (input, int_bytes) = take(body_size)(input)?;
@@ -396,7 +402,7 @@ fn parse_float<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], f64> {
     } else if body_size == 0 {
         Ok((input, 0f64))
     } else {
-        Err(Err::Failure(Error::new(input, ErrorKind::Fail)))
+        Err(Error::ForbiddenFloatSize)
     }
 }
 
@@ -583,8 +589,6 @@ pub fn parse_buffer_to_end(input: &[u8], show_position: bool) -> Vec<ElementTree
 
 #[cfg(test)]
 mod tests {
-    use nom::Needed;
-
     use crate::enumerations::TrackType;
 
     use super::*;
@@ -608,15 +612,14 @@ mod tests {
         // 1 byte missing from FrameRate (3-bytes long)
         assert_eq!(
             parse_id(&[0x23, 0x83]),
-            Err(Err::Incomplete(Needed::Size(1.try_into().unwrap())))
+            Err(Error::Parsing(nom::Err::Incomplete(nom::Needed::Size(
+                1.try_into().unwrap()
+            ))))
         );
 
         // Longer than 4 bytes
         const FAILURE_INPUT: &[u8] = &[0x08, 0x45, 0xDF, 0xA3];
-        assert_eq!(
-            parse_id(FAILURE_INPUT),
-            Err(Err::Failure(Error::new(FAILURE_INPUT, ErrorKind::Fail)))
-        );
+        assert_eq!(parse_id(FAILURE_INPUT), Err(Error::InvalidId));
 
         // Unknown ID
         let (remaining, id) = parse_id(&[0x19, 0xAB, 0xCD, 0xEF]).unwrap();
@@ -632,10 +635,7 @@ mod tests {
         assert_eq!(parse_varint(&[0x53, 0xAC]), Ok((EMPTY, Some(5036))));
 
         const INVALID_VARINT: &[u8] = &[0x00, 0xAC];
-        assert_eq!(
-            parse_varint(INVALID_VARINT),
-            Err(Err::Failure(Error::new(INVALID_VARINT, ErrorKind::Fail)))
-        );
+        assert_eq!(parse_varint(INVALID_VARINT), Err(Error::InvalidVarint));
 
         const UNKNOWN_VARINT: &[u8] = &[0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
         assert_eq!(parse_varint(UNKNOWN_VARINT), Ok((EMPTY, None)));
@@ -673,7 +673,7 @@ mod tests {
         // so we get an incomplete.
         assert_eq!(
             parse_element(&[0x42, 0x87, 0x90, 0x01]),
-            Err(Err::Incomplete(Needed::Unknown))
+            Err(Error::ValidElementNotFound)
         );
 
         // Now it finds a Segment.
@@ -701,25 +701,25 @@ mod tests {
         // String
         assert_eq!(
             parse_element(&[0x86, 0xFF, 0x56, 0x5F, 0x54]),
-            Err(Err::Incomplete(Needed::Unknown))
+            Err(Error::ValidElementNotFound)
         );
 
         // Binary
         assert_eq!(
             parse_element(&[0x63, 0xA2, 0xFF]),
-            Err(Err::Incomplete(Needed::Unknown))
+            Err(Error::ValidElementNotFound)
         );
 
         // Integer
         assert_eq!(
             parse_element(&[0x42, 0x87, 0xFF, 0x01]),
-            Err(Err::Incomplete(Needed::Unknown))
+            Err(Error::ValidElementNotFound)
         );
 
         // Float
         assert_eq!(
             parse_element(&[0x44, 0x89, 0x90, 0x01]),
-            Err(Err::Incomplete(Needed::Unknown))
+            Err(Error::ValidElementNotFound)
         );
     }
 
@@ -750,7 +750,7 @@ mod tests {
         );
         assert_eq!(
             parse_float(&Header::new(Id::Duration, 3, 7), EMPTY),
-            Err(Err::Failure(Error::new(EMPTY, ErrorKind::Fail)))
+            Err(Error::ForbiddenFloatSize)
         );
     }
 
