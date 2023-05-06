@@ -25,14 +25,14 @@ jobs:
 
       - uses: taiki-e/install-action@cross
 
-      - name: Cross Compile
-        run: ./build-cross.py ${{ matrix.target.triple }}
+      - name: Test
+        run: cross test --release --target ${{ matrix.target.triple }}
 
       - name: Upload binary
         uses: actions/upload-artifact@v3
         with:
           name: mkvdump-${{ matrix.target.arch }}
-          path: mkvdump-${{ matrix.target.arch }}
+          path: target/${{ matrix.target.triple }}/release/mkvdump
 
   release:
     runs-on: ubuntu-latest
