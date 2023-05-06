@@ -49,28 +49,31 @@ pub struct Header {
     pub id: Id,
     pub header_size: usize,
     #[serde(skip_serializing)]
-    pub body_size: Option<u64>,
+    pub body_size: Option<usize>,
     #[serialize_always]
     #[serde(serialize_with = "serialize_size")]
-    pub size: Option<u64>,
-    pub position: Option<u64>,
+    pub size: Option<usize>,
+    pub position: Option<usize>,
 }
 
-fn serialize_size<S: Serializer>(size: &Option<u64>, s: S) -> std::result::Result<S::Ok, S::Error> {
+fn serialize_size<S: Serializer>(
+    size: &Option<usize>,
+    s: S,
+) -> std::result::Result<S::Ok, S::Error> {
     if let Some(size) = size {
-        s.serialize_u64(*size)
+        s.serialize_u64(*size as u64)
     } else {
         s.serialize_str("Unknown")
     }
 }
 
 impl Header {
-    fn new(id: Id, header_size: usize, body_size: u64) -> Self {
+    fn new(id: Id, header_size: usize, body_size: usize) -> Self {
         Self {
             id,
             header_size,
             body_size: Some(body_size),
-            size: Some(header_size as u64 + body_size),
+            size: Some(header_size + body_size),
             position: None,
         }
     }
@@ -96,7 +99,7 @@ fn count_leading_zero_bits(input: u8) -> u8 {
     8
 }
 
-fn parse_varint(first_input: &[u8]) -> IResult<&[u8], Option<u64>> {
+fn parse_varint(first_input: &[u8]) -> IResult<&[u8], Option<usize>> {
     let (input, first_byte) = peek(take(1usize))(first_input)?;
     let first_byte = first_byte[0];
 
@@ -120,7 +123,10 @@ fn parse_varint(first_input: &[u8]) -> IResult<&[u8], Option<u64>> {
 
     // If all VINT_DATA bits are set to 1, it's an unkown size/value
     // https://github.com/ietf-wg-cellar/ebml-specification/blob/master/specification.markdown#unknown-data-size
-    let result = if value != bitmask { Some(value) } else { None };
+    //
+    // In 32-bit plaforms, the conversion from u64 to usize will fail if the value
+    // is bigger than u32::MAX.
+    let result = (value != bitmask).then_some(value.try_into()?);
 
     Ok((input, result))
 }
@@ -158,7 +164,7 @@ enum Lacing {
 #[skip_serializing_none]
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Block {
-    track_number: u64,
+    track_number: usize,
     timestamp: i16,
     #[serde(skip_serializing_if = "Not::not")]
     invisible: bool,
@@ -170,7 +176,7 @@ pub struct Block {
 #[skip_serializing_none]
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct SimpleBlock {
-    track_number: u64,
+    track_number: usize,
     timestamp: i16,
     #[serde(skip_serializing_if = "Not::not")]
     keyframe: bool,
@@ -515,7 +521,7 @@ fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
         match element.body {
             Body::Master => {
                 // parse_header() already handles Unknown sizes.
-                let mut size_remaining = element.header.body_size.unwrap_or(u64::MAX);
+                let mut size_remaining = element.header.body_size.unwrap_or(usize::MAX);
 
                 let mut children = Vec::<Element>::new();
                 while size_remaining > 0 {
@@ -531,7 +537,7 @@ fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
                             // Master elements' body size should not count in the recursion
                             // as the children would duplicate the size count, so
                             // we only consider the header size on the calculation.
-                            next_child.header.header_size as u64
+                            next_child.header.header_size
                         } else {
                             next_child
                                 .header
@@ -566,7 +572,7 @@ pub fn parse_elements(input: &[u8], show_position: bool) -> Vec<Element> {
         element.header.position = position;
         position = position.map(|p| {
             if let Body::Master = element.body {
-                p + element.header.header_size as u64
+                p + element.header.header_size
             } else {
                 p + element.header.size.unwrap()
             }
