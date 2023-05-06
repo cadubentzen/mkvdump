@@ -289,11 +289,11 @@ ebml_enumerations! {
         Encryption = 1, original_label = "Encryption";
     };
     ContentCompAlgo {
-        /// zlib compression [@!RFC1950].
+        /// zlib compression (RFC1950).
         Zlib = 0, original_label = "zlib";
-        /// bzip2 compression [@!BZIP2], **SHOULD NOT** be used; see usage notes.
+        /// bzip2 compression (BZIP2), **SHOULD NOT** be used; see usage notes.
         Bzlib = 1, original_label = "bzlib";
-        /// Lempel-Ziv-Oberhumer compression [@!LZO], **SHOULD NOT** be used; see usage notes.
+        /// Lempel-Ziv-Oberhumer compression (LZO), **SHOULD NOT** be used; see usage notes.
         Lzo1X = 2, original_label = "lzo1x";
         /// Octets in `ContentCompSettings` ((#contentcompsettings-element)) have been stripped from each frame.
         HeaderStripping = 3, original_label = "Header Stripping";
@@ -301,21 +301,21 @@ ebml_enumerations! {
     ContentEncAlgo {
         /// The data are not encrypted.
         NotEncrypted = 0, original_label = "Not encrypted";
-        /// Data Encryption Standard (DES) [@!FIPS.46-3].
+        /// Data Encryption Standard (DES) (FIPS.46-3).
         Des = 1, original_label = "DES";
-        /// Triple Data Encryption Algorithm [@!SP.800-67].
+        /// Triple Data Encryption Algorithm (SP.800-67).
         TripleDes = 2, original_label = "3DES";
-        /// Twofish Encryption Algorithm [@!Twofish].
+        /// Twofish Encryption Algorithm.
         Twofish = 3, original_label = "Twofish";
-        /// Blowfish Encryption Algorithm [@!Blowfish].
+        /// Blowfish Encryption Algorithm.
         Blowfish = 4, original_label = "Blowfish";
-        /// Advanced Encryption Standard (AES) [@!FIPS.197].
+        /// Advanced Encryption Standard (AES) (FIPS.197).
         Aes = 5, original_label = "AES";
     };
     AesSettingsCipherMode {
-        /// Counter [@!SP.800-38A].
+        /// Counter (SP.800-38A).
         AesCtr = 1, original_label = "AES-CTR";
-        /// Cipher Block Chaining [@!SP.800-38A].
+        /// Cipher Block Chaining (SP.800-38A).
         AesCbc = 2, original_label = "AES-CBC";
     };
     ContentSigAlgo {

@@ -41,13 +41,13 @@ ebml_elements! {
     /// Contains general information about the Segment.
     name = Info, original_name = "Info", id = 0x1549A966, variant = Master;
     /// A randomly generated unique ID to identify the Segment amongst many others (128 bits).
-    /// It is effectively a Universally Unique IDentifier stored in binary form [@!RFC4122].
+    /// It is effectively a Universally Unique IDentifier stored in binary form (RFC4122).
     /// If the Segment is a part of a Linked Segment, then this Element is **REQUIRED**.
     name = SegmentUuid, original_name = "SegmentUUID", id = 0x73A4, variant = Binary;
     /// A filename corresponding to this Segment.
     name = SegmentFilename, original_name = "SegmentFilename", id = 0x7384, variant = Utf8;
     /// A unique ID to identify the previous Segment of a Linked Segment (128 bits).
-    /// Like the SegmentUUID, it is a Universally Unique IDentifier stored in binary form [@!RFC4122].
+    /// Like the SegmentUUID, it is a Universally Unique IDentifier stored in binary form (RFC4122).
     /// If the Segment is a part of a Linked Segment that uses Hard Linking ((#hard-linking)),
     /// then either the PrevUUID or the NextUUID Element is **REQUIRED**. If a Segment contains a PrevUUID but not a NextUUID,
     /// then it **MAY** be considered as the last Segment of the Linked Segment. The PrevUUID **MUST NOT** be equal to the SegmentUUID.
@@ -57,7 +57,7 @@ ebml_elements! {
     /// but PrevUUID **SHOULD** be considered authoritative for identifying the previous Segment in a Linked Segment.
     name = PrevFilename, original_name = "PrevFilename", id = 0x3C83AB, variant = Utf8;
     /// A unique ID to identify the next Segment of a Linked Segment (128 bits).
-    /// Like the SegmentUUID, it is a Universally Unique IDentifier stored in binary form [@!RFC4122].
+    /// Like the SegmentUUID, it is a Universally Unique IDentifier stored in binary form (RFC4122).
     /// If the Segment is a part of a Linked Segment that uses Hard Linking ((#hard-linking)),
     /// then either the PrevUUID or the NextUUID Element is **REQUIRED**. If a Segment contains a NextUUID but not a PrevUUID,
     /// then it **MAY** be considered as the first Segment of the Linked Segment. The NextUUID **MUST NOT** be equal to the SegmentUUID.
@@ -67,7 +67,7 @@ ebml_elements! {
     /// but NextUUID **SHOULD** be considered authoritative for identifying the Next Segment.
     name = NextFilename, original_name = "NextFilename", id = 0x3E83BB, variant = Utf8;
     /// A randomly generated unique ID that all Segments of a Linked Segment **MUST** share (128 bits).
-    /// It is effectively a Universally Unique IDentifier stored in binary form [@!RFC4122].
+    /// It is effectively a Universally Unique IDentifier stored in binary form (RFC4122).
     /// If the Segment Info contains a `ChapterTranslate` element, this Element is **REQUIRED**.
     name = SegmentFamily, original_name = "SegmentFamily", id = 0x4444, variant = Binary;
     /// The mapping between this `Segment` and a segment value in the given Chapter Codec.
@@ -124,14 +124,14 @@ ebml_elements! {
     name = Block, original_name = "Block", id = 0xA1, variant = Binary;
     /// A Block with no data. It **MUST** be stored in the stream at the place the real Block would be in display order.
     name = BlockVirtual, original_name = "BlockVirtual", id = 0xA2, variant = Binary;
-    /// Contain additional binary data to complete the main one; see Codec BlockAdditions section of [@?MatroskaCodec] for more information.
+    /// Contain additional binary data to complete the main one; see Codec BlockAdditions section of MatroskaCodec for more information.
     /// An EBML parser that has no knowledge of the Block structure could still see and use/skip these data.
     name = BlockAdditions, original_name = "BlockAdditions", id = 0x75A1, variant = Master;
     /// Contain the BlockAdditional and some parameters.
     name = BlockMore, original_name = "BlockMore", id = 0xA6, variant = Master;
     /// Interpreted by the codec as it wishes (using the BlockAddID).
     name = BlockAdditional, original_name = "BlockAdditional", id = 0xA5, variant = Binary;
-    /// An ID to identify how to interpret the BlockAdditional data; see Codec BlockAdditions section of [@?MatroskaCodec] for more information.
+    /// An ID to identify how to interpret the BlockAdditional data; see Codec BlockAdditions section of MatroskaCodec for more information.
     /// A value of 1 indicates that the meaning of the BlockAdditional data is defined by the codec.
     /// Any other value indicates the meaning of the BlockAdditional data is found in the BlockAddIDType found in the TrackEntry.
     /// Each BlockAddID value **MUST** be unique between all BlockMore elements found in a BlockAdditions.
@@ -267,12 +267,12 @@ ebml_elements! {
     /// see (#language-codes) on language codes.
     /// This Element **MUST** be ignored if the LanguageBCP47 Element is used in the same TrackEntry.
     name = Language, original_name = "Language", id = 0x22B59C, variant = String;
-    /// Specifies the language of the track according to [@!BCP47]
-    /// and using the IANA Language Subtag Registry [@!IANALangRegistry].
+    /// Specifies the language of the track according to (BCP47)
+    /// and using the IANA Language Subtag Registry.
     /// If this Element is used, then any Language Elements used in the same TrackEntry **MUST** be ignored.
     name = LanguageBcp47, original_name = "LanguageBCP47", id = 0x22B59D, variant = String;
     /// An ID corresponding to the codec,
-    /// see [@!MatroskaCodec] for more info.
+    /// see MatroskaCodec for more info.
     name = CodecId, original_name = "CodecID", id = 0x86, variant = String;
     /// Private data only known to the codec.
     name = CodecPrivate, original_name = "CodecPrivate", id = 0x63A2, variant = Binary;
@@ -402,21 +402,21 @@ ebml_elements! {
     name = MaxFall, original_name = "MaxFALL", id = 0x55BD, variant = Unsigned;
     /// SMPTE 2086 mastering data.
     name = MasteringMetadata, original_name = "MasteringMetadata", id = 0x55D0, variant = Master;
-    /// Red X chromaticity coordinate, as defined by [@!CIE-1931].
+    /// Red X chromaticity coordinate, as defined by CIE-1931.
     name = PrimaryRChromaticityX, original_name = "PrimaryRChromaticityX", id = 0x55D1, variant = Float;
-    /// Red Y chromaticity coordinate, as defined by [@!CIE-1931].
+    /// Red Y chromaticity coordinate, as defined by CIE-1931.
     name = PrimaryRChromaticityY, original_name = "PrimaryRChromaticityY", id = 0x55D2, variant = Float;
-    /// Green X chromaticity coordinate, as defined by [@!CIE-1931].
+    /// Green X chromaticity coordinate, as defined by CIE-1931.
     name = PrimaryGChromaticityX, original_name = "PrimaryGChromaticityX", id = 0x55D3, variant = Float;
-    /// Green Y chromaticity coordinate, as defined by [@!CIE-1931].
+    /// Green Y chromaticity coordinate, as defined by CIE-1931.
     name = PrimaryGChromaticityY, original_name = "PrimaryGChromaticityY", id = 0x55D4, variant = Float;
-    /// Blue X chromaticity coordinate, as defined by [@!CIE-1931].
+    /// Blue X chromaticity coordinate, as defined by CIE-1931.
     name = PrimaryBChromaticityX, original_name = "PrimaryBChromaticityX", id = 0x55D5, variant = Float;
-    /// Blue Y chromaticity coordinate, as defined by [@!CIE-1931].
+    /// Blue Y chromaticity coordinate, as defined by CIE-1931.
     name = PrimaryBChromaticityY, original_name = "PrimaryBChromaticityY", id = 0x55D6, variant = Float;
-    /// White X chromaticity coordinate, as defined by [@!CIE-1931].
+    /// White X chromaticity coordinate, as defined by CIE-1931.
     name = WhitePointChromaticityX, original_name = "WhitePointChromaticityX", id = 0x55D7, variant = Float;
-    /// White Y chromaticity coordinate, as defined by [@!CIE-1931].
+    /// White Y chromaticity coordinate, as defined by CIE-1931.
     name = WhitePointChromaticityY, original_name = "WhitePointChromaticityY", id = 0x55D8, variant = Float;
     /// Maximum luminance. Represented in candelas per square meter (cd/m^2^).
     name = LuminanceMax, original_name = "LuminanceMax", id = 0x55D9, variant = Float;
@@ -619,7 +619,7 @@ ebml_elements! {
     /// A unique ID to identify the Chapter.
     name = ChapterUid, original_name = "ChapterUID", id = 0x73C4, variant = Unsigned;
     /// A unique string ID to identify the Chapter.
-    /// Use for WebVTT cue identifier storage [@!WebVTT].
+    /// Use for WebVTT cue identifier storage.
     name = ChapterStringUid, original_name = "ChapterStringUID", id = 0x5654, variant = Utf8;
     /// Timestamp of the start of Chapter, expressed in Matroska Ticks -- ie in nanoseconds; see (#timestamp-ticks).
     name = ChapterTimeStart, original_name = "ChapterTimeStart", id = 0x91, variant = Unsigned;
@@ -636,7 +636,7 @@ ebml_elements! {
     /// When disabled, the movie **SHOULD** skip all the content between the TimeStart and TimeEnd of this chapter; see (#chapter-flags) on Chapter flags.
     name = ChapterFlagEnabled, original_name = "ChapterFlagEnabled", id = 0x4598, variant = Unsigned;
     /// The SegmentUUID of another Segment to play during this chapter (128 bits).
-    /// Like the SegmentUUID, it is a Universally Unique IDentifier stored in binary form [@!RFC4122].
+    /// Like the SegmentUUID, it is a Universally Unique IDentifier stored in binary form (RFC4122).
     /// The value **MUST NOT** be the `SegmentUUID` value of the `Segment` it belongs to.
     /// ChapterSegmentUUID **MUST** be set (minOccurs=1) if ChapterSegmentEditionUID is used; see (#medium-linking) on medium-linking Segments.
     name = ChapterSegmentUuid, original_name = "ChapterSegmentUUID", id = 0x6E67, variant = Binary;
@@ -657,14 +657,14 @@ ebml_elements! {
     /// Contains the string to use as the chapter atom.
     name = ChapString, original_name = "ChapString", id = 0x85, variant = Utf8;
     /// A language corresponding to the string,
-    /// in the bibliographic ISO-639-2 form [@!ISO639-2].
+    /// in the bibliographic ISO-639-2 form (ISO639-2).
     /// This Element **MUST** be ignored if a ChapLanguageBCP47 Element is used within the same ChapterDisplay Element.
     name = ChapLanguage, original_name = "ChapLanguage", id = 0x437C, variant = String;
-    /// Specifies a language corresponding to the ChapString in the format defined in [@!BCP47]
-    /// and using the IANA Language Subtag Registry [@!IANALangRegistry].
+    /// Specifies a language corresponding to the ChapString in the format defined in (BCP47)
+    /// and using the IANA Language Subtag Registry.
     /// If a ChapLanguageBCP47 Element is used, then any ChapLanguage and ChapCountry Elements used in the same ChapterDisplay **MUST** be ignored.
     name = ChapLanguageBcp47, original_name = "ChapLanguageBCP47", id = 0x437D, variant = String;
-    /// A country corresponding to the string, using the same 2 octets country-codes as in Internet domains [@!IANADomains] based on [@!ISO3166-1] alpha-2 codes.
+    /// A country corresponding to the string, using the same 2 octets country-codes as in Internet domains based on ISO3166-1 alpha-2 codes.
     /// This Element **MUST** be ignored if a ChapLanguageBCP47 Element is used within the same ChapterDisplay Element.
     name = ChapCountry, original_name = "ChapCountry", id = 0x437E, variant = String;
     /// Contains all the commands associated to the Atom.
@@ -685,7 +685,7 @@ ebml_elements! {
     /// the data correspond to the binary DVD cell pre/post commands; see (#menu-features) on DVD menus.
     name = ChapProcessData, original_name = "ChapProcessData", id = 0x6933, variant = Binary;
     /// Element containing metadata describing Tracks, Editions, Chapters, Attachments, or the Segment as a whole.
-    /// A list of valid tags can be found in [@!MatroskaTags].
+    /// A list of valid tags can be found in MatroskaTags.
     name = Tags, original_name = "Tags", id = 0x1254C367, variant = Master;
     /// A single metadata descriptor.
     name = Tag, original_name = "Tag", id = 0x7373, variant = Master;
@@ -695,7 +695,7 @@ ebml_elements! {
     /// A number to indicate the logical level of the target.
     name = TargetTypeValue, original_name = "TargetTypeValue", id = 0x68CA, variant = Unsigned;
     /// An informational string that can be used to display the logical level of the target like "ALBUM", "TRACK", "MOVIE", "CHAPTER", etc
-    /// ; see Section 6.4 of [@!MatroskaTags].
+    /// ; see Section 6.4 of MatroskaTags.
     name = TargetType, original_name = "TargetType", id = 0x63CA, variant = String;
     /// A unique ID to identify the Track(s) the tags belong to.
     /// If the value is 0 at this level, the tags apply to all tracks in the Segment.
@@ -721,8 +721,8 @@ ebml_elements! {
     /// see (#language-codes) on language codes.
     /// This Element **MUST** be ignored if the TagLanguageBCP47 Element is used within the same SimpleTag Element.
     name = TagLanguage, original_name = "TagLanguage", id = 0x447A, variant = String;
-    /// Specifies the language used in the TagString according to [@!BCP47]
-    /// and using the IANA Language Subtag Registry [@!IANALangRegistry].
+    /// Specifies the language used in the TagString according to (BCP47)
+    /// and using the IANA Language Subtag Registry.
     /// If this Element is used, then any TagLanguage Elements used in the same SimpleTag **MUST** be ignored.
     name = TagLanguageBcp47, original_name = "TagLanguageBCP47", id = 0x447B, variant = String;
     /// A boolean value to indicate if this is the default/original language to use for the given tag.
