@@ -24,22 +24,17 @@ jobs:
         override: true
         components: llvm-tools-preview
 
-    - name: Install grcov
-      run: if [[ ! -e ~/.cargo/bin/grcov ]]; then cargo install grcov; fi
+    - name: cargo install cargo-llvm-cov
+      uses: taiki-e/install-action@cargo-llvm-cov
 
-    - name: Run tests
-      run: cargo test
-      env:
-        RUSTFLAGS: '-C instrument-coverage'
-        LLVM_PROFILE_FILE: 'report-%p-%m.profraw'
-
-    - name: Run grcov
-      run: grcov . --binary-path target/debug/deps/ -s . -t lcov --branch --ignore-not-existing --ignore '../**' --ignore '/*' --ignore 'src/main.rs' -o coverage.lcov
+    - name: cargo llvm-cov
+      run: cargo llvm-cov --locked --all-features --lcov --output-path lcov.info
 
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v3
       with:
-        token: ${{secrets.CODECOV_TOKEN}}
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: true
 
   release:
     runs-on: ubuntu-latest

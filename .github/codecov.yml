@@ -1,0 +1,16 @@
+coverage:
+  range: 95..100
+  round: down
+  precision: 1
+  status:
+    project:
+      default:
+        threshold: 1%
+
+ignore:
+  - "tests"
+  - "src/main.rs"
+
+comment:
+  layout: "files"
+  require_changes: yes
