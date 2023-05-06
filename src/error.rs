@@ -1,4 +1,4 @@
-use std::string::FromUtf8Error;
+use std::{num::TryFromIntError, string::FromUtf8Error};
 
 #[derive(Debug, PartialEq, thiserror::Error)]
 pub enum Error {
@@ -20,4 +20,6 @@ pub enum Error {
     ValidElementNotFound,
     #[error("missing track number")]
     MissingTrackNumber,
+    #[error("overflow")]
+    Overflow(#[from] TryFromIntError),
 }
