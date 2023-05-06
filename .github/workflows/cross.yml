@@ -21,17 +21,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+      - uses: taiki-e/install-action@cross
 
-      - name: Cross Compile
-        run: ./build-cross.py ${{ matrix.target.triple }}
+      - name: Test
+        run: cross test --release --target ${{ matrix.target.triple }}
 
       - name: Upload binary
         uses: actions/upload-artifact@v3
         with:
           name: mkvdump-${{ matrix.target.arch }}
-          path: mkvdump-${{ matrix.target.arch }}
+          path: target/${{ matrix.target.triple }}/release/mkvdump
 
   release:
     runs-on: ubuntu-latest
@@ -45,8 +44,8 @@ jobs:
 
       - name: Rename files
         run: |
-          cp mkvdump-x86_64/mkvdump-x86_64 mkvdump-linux-x86_64
-          cp mkvdump-aarch64/mkvdump-aarch64 mkvdump-linux-aarch64
+          cp mkvdump-x86_64/mkvdump mkvdump-linux-x86_64
+          cp mkvdump-aarch64/mkvdump mkvdump-linux-aarch64
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -64,6 +63,8 @@ jobs:
         uses: actions/checkout@v3
 
       - uses: actions/download-artifact@v3
+        with:
+          path: artifacts
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
