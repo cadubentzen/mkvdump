@@ -133,7 +133,6 @@ fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
     // Only Segment and Cluster have unknownsizeallowed="1" in ebml_matroska.xml.
     // Also mentioned in https://www.w3.org/TR/mse-byte-stream-format-webm/
     if body_size.is_none() && id != Id::Segment && id != Id::Cluster {
-        eprintln!("Unknown sizes are only supported in Segment and Cluster elements");
         return Err(Error::ForbiddenUnknownSize);
     }
 
