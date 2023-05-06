@@ -1,0 +1,112 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - 'v*'
+
+jobs:
+  cross:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # If you add an extra config, also add a new platform in docker/build-push-action.
+        # The current platforms are the intersection between cross targets available at
+        # https://github.com/orgs/cross-rs/packages?tab=packages&q=musl
+        # and platforms supported by the alpine.
+        config:
+          - target: x86_64-unknown-linux-musl
+            arch: x86_64
+          - target: i686-unknown-linux-musl
+            arch: x86
+          - target: aarch64-unknown-linux-musl
+            arch: aarch64
+          - target: arm-unknown-linux-musleabi
+            arch: armv6l
+          - target: armv7-unknown-linux-musleabi
+            arch: armv7l
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: taiki-e/install-action@cross
+
+      - name: Build
+        run: cross build --release --target ${{ matrix.config.target }}
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: mkvdump-${{ matrix.config.arch }}
+          path: target/${{ matrix.config.target }}/release/mkvdump
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: cross
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: cadubentzen/mkvdump
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          platforms: >-
+            linux/amd64,linux/386,
+            linux/arm64/v8,linux/arm/v6,linux/arm/v7
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  github-release:
+    runs-on: ubuntu-latest
+    needs: cross
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+
+      - name: Rename files
+        run: |
+          cp mkvdump-x86_64/mkvdump mkvdump-linux-x86_64
+          cp mkvdump-x86/mkvdump mkvdump-linux-x86
+          cp mkvdump-aarch64/mkvdump mkvdump-linux-aarch64
+          cp mkvdump-armv6l/mkvdump mkvdump-linux-armv6l
+          cp mkvdump-armv7l/mkvdump mkvdump-linux-armv7l
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: |
+            mkvdump-linux-x86_64
+            mkvdump-linux-x86
+            mkvdump-linux-aarch64
+            mkvdump-linux-armv6l
+            mkvdump-linux-armv7l
