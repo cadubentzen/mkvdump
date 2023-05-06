@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - 'main'
+      # TODO: remove this once it's been tested on the PR
+      - 'cross'
     tags:
       - 'v*'
 
@@ -21,8 +23,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+      # TODO: check if this can be removed or still needed
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v2
+
+      - uses: taiki-e/install-action@cross
 
       - name: Cross Compile
         run: ./build-cross.py ${{ matrix.target.triple }}

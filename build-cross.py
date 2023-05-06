@@ -18,7 +18,6 @@ def main():
     target = sys.argv[1]
     arch = target.split("-")[0]
 
-    run("cargo install cross --git https://github.com/cross-rs/cross")
     run(f"cross test --release --target {target}")
     run(f"cross build --release --target {target}")
 
