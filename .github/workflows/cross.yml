@@ -23,10 +23,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # TODO: check if this can be removed or still needed
-      # - name: Set up QEMU
-      #   uses: docker/setup-qemu-action@v2
-
       - uses: taiki-e/install-action@cross
 
       - name: Cross Compile
