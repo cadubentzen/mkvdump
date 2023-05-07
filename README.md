@@ -223,7 +223,7 @@ To pull latest mkvdump from Dockerhub:
 $ docker pull cadubentzen/mkvdump
 ```
 
-Images are multi-arch with support for `linux/amd64`,`linux/386`,`linux/arm64`,`linux/arm/v7` and `linux/arm/v6`.
+Images are multi-arch with support for `linux/amd64`, `linux/386`, `linux/arm64`, `linux/arm/v7` and `linux/arm/v6`.
 
 ### Running the container
 
@@ -234,7 +234,7 @@ $ docker run -v /host-path:/media cadubentzen/mkvdump /media/sample.mkv
 
 ## Prebuilt binaries
 
-Download prebuilt binaries for **Linux** on `x86_64`,`x86`,`aarch64`,`armv7l` and `armv6l` from the [release page](https://github.com/cadubentzen/mkvdump/releases).
+Download prebuilt binaries for **Linux** on `x86_64`, `x86`, `aarch64`, `armv7l` and `armv6l` from the [release page](https://github.com/cadubentzen/mkvdump/releases).
 
 Download it somewhere accessible in your PATH and make it runnable:
 ```bash
