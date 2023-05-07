@@ -281,31 +281,43 @@ fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
     let element_type = header.id.get_type();
 
     let (input, body) = match element_type {
-        Type::Master => Ok((input, Body::Master)),
-        Type::Unsigned => parse_int(&header, input)
-            .map(|(input, value)| (input, Body::Unsigned(Enumeration::new(&header.id, value)))),
+        Type::Master => (input, Body::Master),
+        Type::Unsigned => {
+            let (input, value) = parse_int(&header, input)?;
+            (input, Body::Unsigned(Enumeration::new(&header.id, value)))
+        }
         Type::Signed => {
-            parse_int(&header, input).map(|(input, value)| (input, Body::Signed(value)))
+            let (input, value) = parse_int(&header, input)?;
+            (input, Body::Signed(value))
         }
         Type::Float => {
-            parse_float(&header, input).map(|(input, value)| (input, Body::Float(value)))
+            let (input, value) = parse_float(&header, input)?;
+            (input, Body::Float(value))
         }
         Type::String => {
-            parse_string(&header, input).map(|(input, value)| (input, Body::String(value)))
+            let (input, value) = parse_string(&header, input)?;
+            (input, Body::String(value))
         }
-        Type::Utf8 => parse_string(&header, input).map(|(input, value)| (input, Body::Utf8(value))),
-        Type::Date => parse_date(&header, input).map(|(input, value)| (input, Body::Date(value))),
-        Type::Binary => parse_binary(&header, input).map(|(input, value)| {
+        Type::Utf8 => {
+            let (input, value) = parse_string(&header, input)?;
+            (input, Body::Utf8(value))
+        }
+        Type::Date => {
+            let (input, value) = parse_date(&header, input)?;
+            (input, Body::Date(value))
+        }
+        Type::Binary => {
+            let (input, value) = parse_binary(&header, input)?;
             let binary_value = match header.id {
-                Id::SeekId => BinaryValue::SeekId(parse_id(&value).unwrap().1),
-                Id::SimpleBlock => BinaryValue::SimpleBlock(parse_simple_block(&value).unwrap().1),
-                Id::Block => BinaryValue::Block(parse_block(&value).unwrap().1),
+                Id::SeekId => BinaryValue::SeekId(parse_id(&value)?.1),
+                Id::SimpleBlock => BinaryValue::SimpleBlock(parse_simple_block(&value)?.1),
+                Id::Block => BinaryValue::Block(parse_block(&value)?.1),
                 Id::Void => BinaryValue::Void,
                 _ => BinaryValue::Standard(value),
             };
             (input, Body::Binary(binary_value))
-        }),
-    }?;
+        }
+    };
 
     let element = Element { header, body };
     Ok((input, element))
