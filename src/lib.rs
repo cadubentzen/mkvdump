@@ -313,7 +313,7 @@ fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
                 Id::SimpleBlock => BinaryValue::SimpleBlock(parse_simple_block(&value)?.1),
                 Id::Block => BinaryValue::Block(parse_block(&value)?.1),
                 Id::Void => BinaryValue::Void,
-                _ => BinaryValue::Standard(value),
+                _ => BinaryValue::Standard(value.into()),
             };
             (input, Body::Binary(binary_value))
         }
@@ -334,13 +334,10 @@ fn parse_string<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Strin
     Ok((input, value))
 }
 
-fn parse_binary<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Vec<u8>> {
+fn parse_binary<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], &'a [u8]> {
     let body_size = header.body_size.ok_or(Error::ForbiddenUnknownSize)?;
 
-    let (input, bytes) = take(body_size)(input)?;
-    let value = Vec::from(bytes);
-
-    Ok((input, value))
+    Ok(take(body_size)(input)?)
 }
 
 fn parse_date<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], DateTime<Utc>> {
@@ -781,9 +778,10 @@ mod tests {
 
     #[test]
     fn test_parse_binary() {
+        const BODY: &[u8] = &[0x15, 0x49, 0xA9, 0x66];
         assert_eq!(
-            parse_binary(&Header::new(Id::SeekId, 3, 4), &[0x15, 0x49, 0xA9, 0x66]),
-            Ok((EMPTY, vec![0x15, 0x49, 0xA9, 0x66]))
+            parse_binary(&Header::new(Id::SeekId, 3, 4), BODY),
+            Ok((EMPTY, BODY))
         );
         assert_eq!(
             parse_binary(&Header::with_unknown_size(Id::SeekId, 3), EMPTY),
