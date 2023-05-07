@@ -144,10 +144,9 @@ fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
 
     let header_size = initial_len - input.len();
 
-    let header = if let Some(body_size) = body_size {
-        Header::new(id, header_size, body_size)
-    } else {
-        Header::with_unknown_size(id, header_size)
+    let header = match body_size {
+        Some(body_size) => Header::new(id, header_size, body_size),
+        None => Header::with_unknown_size(id, header_size),
     };
 
     Ok((input, header))
@@ -278,15 +277,10 @@ fn find_valid_element(input: &[u8]) -> IResult<&[u8], Element> {
 }
 
 fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
-    let header_result = parse_header(original_input);
-    if header_result.is_err() {
-        return find_valid_element(original_input);
-    }
-
-    let (input, header) = header_result.unwrap();
+    let (input, header) = parse_header(original_input)?;
     let element_type = header.id.get_type();
 
-    let parsing_result = match element_type {
+    let (input, body) = match element_type {
         Type::Master => Ok((input, Body::Master)),
         Type::Unsigned => parse_int(&header, input)
             .map(|(input, value)| (input, Body::Unsigned(Enumeration::new(&header.id, value)))),
@@ -311,12 +305,7 @@ fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
             };
             (input, Body::Binary(binary_value))
         }),
-    };
-    if parsing_result.is_err() {
-        return find_valid_element(original_input);
-    }
-
-    let (input, body) = parsing_result.unwrap();
+    }?;
 
     let element = Element { header, body };
     Ok((input, element))
@@ -564,11 +553,16 @@ fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
     trees
 }
 
+fn parse_element_or_skip_corrupted(input: &[u8]) -> IResult<&[u8], Element> {
+    parse_element(input).or_else(|_| find_valid_element(input))
+}
+
 pub fn parse_elements(input: &[u8], show_position: bool) -> Vec<Element> {
     let mut elements = Vec::<Element>::new();
     let mut read_buffer = input;
     let mut position = show_position.then_some(0);
-    while let Ok((new_read_buffer, mut element)) = parse_element(read_buffer) {
+
+    while let Ok((new_read_buffer, mut element)) = parse_element_or_skip_corrupted(read_buffer) {
         element.header.position = position;
         position = position.map(|p| {
             if let Body::Master = element.body {
@@ -682,13 +676,14 @@ mod tests {
         // so we get an incomplete.
         assert_eq!(
             parse_element(&[0x42, 0x87, 0x90, 0x01]),
-            Err(Error::ValidElementNotFound)
+            Err(Error::ForbiddenIntegerSize)
         );
 
         // Now it finds a Segment.
         const SEGMENT_ID: &[u8] = &[0x18, 0x53, 0x80, 0x67];
         let (remaining, element) =
-            parse_element(&[0x42, 0x87, 0x90, 0x01, 0x18, 0x53, 0x80, 0x67]).unwrap();
+            parse_element_or_skip_corrupted(&[0x42, 0x87, 0x90, 0x01, 0x18, 0x53, 0x80, 0x67])
+                .unwrap();
         assert_eq!(
             (remaining, &element),
             (
@@ -702,33 +697,30 @@ mod tests {
         assert!(element.header.id.get_value().is_none());
     }
 
-    // TODO(#28): could have better error return types here for assertion.
-    // Currently it looks like we are reading the unknown size but we're
-    // actually trying to find a valid element to skip over the corrupted bytes.
     #[test]
     fn test_parse_corrupted_unknown_size() {
         // String
         assert_eq!(
             parse_element(&[0x86, 0xFF, 0x56, 0x5F, 0x54]),
-            Err(Error::ValidElementNotFound)
+            Err(Error::ForbiddenUnknownSize)
         );
 
         // Binary
         assert_eq!(
             parse_element(&[0x63, 0xA2, 0xFF]),
-            Err(Error::ValidElementNotFound)
+            Err(Error::ForbiddenUnknownSize)
         );
 
         // Integer
         assert_eq!(
             parse_element(&[0x42, 0x87, 0xFF, 0x01]),
-            Err(Error::ValidElementNotFound)
+            Err(Error::ForbiddenUnknownSize)
         );
 
         // Float
         assert_eq!(
-            parse_element(&[0x44, 0x89, 0x90, 0x01]),
-            Err(Error::ValidElementNotFound)
+            parse_element(&[0x44, 0x89, 0xFF, 0x01]),
+            Err(Error::ForbiddenUnknownSize)
         );
     }
 
