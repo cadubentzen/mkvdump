@@ -22,4 +22,6 @@ pub enum Error {
     MissingTrackNumber,
     #[error("overflow")]
     Overflow(#[from] TryFromIntError),
+    #[error("invalid date")]
+    InvalidDate,
 }

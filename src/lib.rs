@@ -348,15 +348,16 @@ fn parse_binary<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], &'a [
 fn parse_date<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], DateTime<Utc>> {
     let (input, timestamp_nanos_to_2001) = parse_int::<i64>(header, input)?;
     let nanos_2001 = NaiveDate::from_ymd_opt(2001, 1, 1)
-        .unwrap()
+        .ok_or(Error::InvalidDate)?
         .and_hms_opt(0, 0, 0)
-        .unwrap()
+        .ok_or(Error::InvalidDate)?
         .timestamp_nanos();
     let timestamp_seconds_to_1970 = (timestamp_nanos_to_2001 + nanos_2001) / 1_000_000_000;
     Ok((
         input,
         DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp_opt(timestamp_seconds_to_1970, 0).unwrap(),
+            NaiveDateTime::from_timestamp_opt(timestamp_seconds_to_1970, 0)
+                .ok_or(Error::InvalidDate)?,
             Utc,
         ),
     ))
@@ -582,6 +583,7 @@ pub fn parse_elements(input: &[u8], show_position: bool) -> Vec<Element> {
             if let Body::Master = element.body {
                 p + element.header.header_size
             } else {
+                // It's safe to unwrap because all non-Master elements have a set size
                 p + element.header.size.unwrap()
             }
         });
