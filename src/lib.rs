@@ -199,6 +199,18 @@ pub enum BinaryValue {
     Corrupted,
 }
 
+impl BinaryValue {
+    fn new(id: &Id, value: &[u8]) -> Result<Self> {
+        Ok(match id {
+            Id::SeekId => BinaryValue::SeekId(parse_id(&value)?.1),
+            Id::SimpleBlock => BinaryValue::SimpleBlock(parse_simple_block(&value)?.1),
+            Id::Block => BinaryValue::Block(parse_block(&value)?.1),
+            Id::Void => BinaryValue::Void,
+            _ => BinaryValue::Standard(value.into()),
+        })
+    }
+}
+
 fn serialize_short_payloads<S: Serializer>(
     payload: &[u8],
     s: S,
@@ -308,14 +320,7 @@ fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
         }
         Type::Binary => {
             let (input, value) = parse_binary(&header, input)?;
-            let binary_value = match header.id {
-                Id::SeekId => BinaryValue::SeekId(parse_id(&value)?.1),
-                Id::SimpleBlock => BinaryValue::SimpleBlock(parse_simple_block(&value)?.1),
-                Id::Block => BinaryValue::Block(parse_block(&value)?.1),
-                Id::Void => BinaryValue::Void,
-                _ => BinaryValue::Standard(value.into()),
-            };
-            (input, Body::Binary(binary_value))
+            (input, Body::Binary(BinaryValue::new(&header.id, value)?))
         }
     };
 
