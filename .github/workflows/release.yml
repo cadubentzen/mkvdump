@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'arm-hf'
     tags:
       - 'v*'
 
@@ -23,9 +24,9 @@ jobs:
             arch: x86
           - target: aarch64-unknown-linux-musl
             arch: aarch64
-          - target: arm-unknown-linux-musleabi
+          - target: arm-unknown-linux-musleabihf
             arch: armv6l
-          - target: armv7-unknown-linux-musleabi
+          - target: armv7-unknown-linux-musleabihf
             arch: armv7l
     steps:
       - name: Checkout
