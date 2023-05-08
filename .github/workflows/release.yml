@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - 'main'
-      # FIXME: remove this
-      - 'macos-windows'
     tags:
       - 'v*'
 
@@ -143,8 +141,7 @@ jobs:
     needs:
       - standard
       - cross
-    # FIXME: remove comment
-    # if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Checkout
         uses: actions/checkout@v3
