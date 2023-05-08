@@ -2,33 +2,12 @@
 
 [![coverage](https://codecov.io/gh/cadubentzen/mkvdump/branch/main/graph/badge.svg?token=2Q2LOK4J95)](https://codecov.io/gh/cadubentzen/mkvdump)
 [![test](https://github.com/cadubentzen/mkvdump/actions/workflows/test.yml/badge.svg)](https://github.com/cadubentzen/mkvdump/blob/main/.github/workflows/test.yml)
+[![Crates.io](https://img.shields.io/crates/v/mkvdump.svg)](https://crates.io/crates/mkvdump)
+
 
 A command-line tool for debugging Matroska/WebM files in common formats.
 
-```
-$ mkvdump --help
-mkvdump 0.3.1
-Carlos Bentzen <cadubentzen@gmail.com>
-MKV and WebM parser CLI tool
-
-USAGE:
-    mkvdump [OPTIONS] <FILENAME>
-
-ARGS:
-    <FILENAME>    Name of the MKV/WebM file to be parsed
-
-OPTIONS:
-    -f, --format <FORMAT>           Output format [default: yaml] [possible values: json, yaml]
-    -h, --help                      Print help information
-    -l, --linear-output             Show output as a sequence, rather than a tree
-    -p, --show-element-positions    Add element positions in the output
-    -V, --version                   Print version information
-```
-
-
-Sample output:
 ```yaml
-# mkvdump sample.mkv
 - id: EBML
   header_size: 5
   size: 36
@@ -207,42 +186,57 @@ Sample output:
     # ...
 ```
 
-# Getting mkvdump
+## Getting mkvdump
 
-## Cargo
+### Cargo
 
-If you have `cargo` installed, you can install mkvdump from [crates.io](https://crates.io) with:
+If you have [cargo-binstall](https://github.com/cargo-bins/cargo-binstall) installed, you can install mkvdump with
+
+```bash
+$ cargo binstall mkvdump
+```
+
+Else, you can install by building it from source with:
+
 ```bash
 $ cargo install mkvdump
 ```
 
-## Docker
+### Docker
 
-To pull latest mkvdump from Dockerhub:
+To pull latest mkvdump from [Docker Hub](https://hub.docker.com/r/cadubentzen/mkvdump):
+
 ```bash
 $ docker pull cadubentzen/mkvdump
 ```
 
+A [GitHub package](https://github.com/cadubentzen/mkvdump/pkgs/container/mkvdump) is also available via
+
+```bash
+$ docker pull ghcr.io/cadubentzen/mkvdump
+```
+
 Images are multi-arch with support for `linux/amd64`, `linux/386`, `linux/arm64`, `linux/arm/v7` and `linux/arm/v6`.
 
-### Running the container
+#### Running the container
 
-Asssuming a Mastroska file in the host located in `/host-path/sample.mkv`. You could run mkvdump on it with the following command, by mounting a volume:
+Asssuming a Mastroska file in the host located at `/host-path/sample.mkv`. You can run mkvdump on it with the following command, by mounting a volume:
 ```bash
 $ docker run -v /host-path:/media cadubentzen/mkvdump /media/sample.mkv
 ```
 
-## Prebuilt binaries
+### Prebuilt binaries
 
-Download prebuilt binaries for **Linux** on `x86_64`, `x86`, `aarch64`, `armv7l` and `armv6l` from the [release page](https://github.com/cadubentzen/mkvdump/releases).
+Download prebuilt binaries from the [release page](https://github.com/cadubentzen/mkvdump/releases). There are binaries for the following targets:
+- Linux
+  - statically linked with musl: `x86_64`, `x86`, `aarch64`, `armv7l` and `armv6l`
+  - with GNU libc: `x86_64` and `x86` (built on Ubuntu 20.04)
+- macOS
+  - `x86_64` and `aarch64` (>= macOS 11 Big Sur)
+- Windows
+  - `x86_64` and `x86` with MSVC and MinGW
 
-Download it somewhere accessible in your PATH and make it runnable:
-```bash
-$ sudo curl -L https://github.com/cadubentzen/mkvdump/releases/download/v0.3.1/mkvdump-linux-x86_64 -o /usr/local/bin/mkvdump
-$ sudo chmod +x /usr/local/bin/mkvdump
-```
-
-# License
+## License
 
 &copy; 2022 Carlos Bentzen <cadubentzen@gmail.com>.
 
