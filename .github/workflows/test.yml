@@ -39,7 +39,7 @@ jobs:
         fail_ci_if_error: true
 
   os-check:
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os:
