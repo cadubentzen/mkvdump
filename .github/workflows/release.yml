@@ -166,6 +166,7 @@ jobs:
           )
           for target in "${targets[@]}"
           do
+            chmod +x mkvdump-${GITHUB_REF_NAME}-${target}/mkvdump
             tar zcvf mkvdump-${GITHUB_REF_NAME}-${target}.tar.gz mkvdump-${GITHUB_REF_NAME}-${target}
           done
 
