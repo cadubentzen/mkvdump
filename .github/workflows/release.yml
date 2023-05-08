@@ -188,7 +188,8 @@ jobs:
         with:
           draft: true
           files: |
-            mkvdump-${{ github.ref_name }}-*.{tar.gz,zip}
+            mkvdump-${{ github.ref_name }}-*.tar.gz
+            mkvdump-${{ github.ref_name }}-*.zip
 
   crates-io:
     runs-on: ubuntu-latest
