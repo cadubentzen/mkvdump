@@ -188,16 +188,7 @@ jobs:
         with:
           draft: true
           files: |
-            mkvdump-${{ github.ref_name }}-x86_64-unknown-linux-musl.tar.gz
-            mkvdump-${{ github.ref_name }}-i686-unknown-linux-musl.tar.gz
-            mkvdump-${{ github.ref_name }}-aarch64-unknown-linux-musl.tar.gz
-            mkvdump-${{ github.ref_name }}-arm-unknown-linux-musleabihf.tar.gz
-            mkvdump-${{ github.ref_name }}-armv7-unknown-linux-musleabihf.tar.gz
-            mkvdump-${{ github.ref_name }}-x86_64-unknown-linux-gnu.tar.gz
-            mkvdump-${{ github.ref_name }}-x86_64-apple-darwin.tar.gz
-            mkvdump-${{ github.ref_name }}-aarch64-apple-darwin.tar.gz
-            mkvdump-${{ github.ref_name }}-x86_64-pc-windows-msvc.zip
-            mkvdump-${{ github.ref_name }}-i686-pc-windows-msvc.zip
+            mkvdump-${{ github.ref_name }}-*.{tar.gz,zip}
 
   crates-io:
     runs-on: ubuntu-latest
