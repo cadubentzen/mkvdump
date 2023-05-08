@@ -164,7 +164,6 @@ jobs:
             arm-unknown-linux-musleabihf
             armv7-unknown-linux-musleabihf
             x86_64-unknown-linux-gnu
-            i686-unknown-linux-gn
             x86_64-apple-darwin
             aarch64-apple-darwin
           )
