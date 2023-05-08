@@ -25,11 +25,7 @@ jobs:
             os: macos-latest
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-          - target: x86_64-pc-windows-gnu
-            os: windows-latest
           - target: i686-pc-windows-msvc
-            os: windows-latest
-          - target: i686-pc-windows-gnu
             os: windows-latest
     steps:
       - name: Checkout
@@ -181,9 +177,7 @@ jobs:
         run: |
           targets=(
             x86_64-pc-windows-msvc
-            x86_64-pc-windows-gnu
             i686-pc-windows-msvc
-            i686-pc-windows-gnu
           )
           for target in "${targets[@]}"
           do
@@ -205,9 +199,7 @@ jobs:
             mkvdump-${{ github.ref_name }}-x86_64-apple-darwin.tar.gz
             mkvdump-${{ github.ref_name }}-aarch64-apple-darwin.tar.gz
             mkvdump-${{ github.ref_name }}-x86_64-pc-windows-msvc.zip
-            mkvdump-${{ github.ref_name }}-x86_64-pc-windows-gnu.zip
             mkvdump-${{ github.ref_name }}-i686-pc-windows-msvc.zip
-            mkvdump-${{ github.ref_name }}-i686-pc-windows-gnu.zip
 
   crates-io:
     runs-on: ubuntu-latest
