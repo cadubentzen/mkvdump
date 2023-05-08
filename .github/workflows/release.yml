@@ -13,6 +13,7 @@ jobs:
   standard:
     runs-on: ${{ matrix.config.os }}
     strategy:
+      fail-fast: false
       matrix:
         config:
           - target: x86_64-unknown-linux-gnu
@@ -54,6 +55,7 @@ jobs:
   musl:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         # If you add an extra config, also add a new platform in docker/build-push-action.
         # The current platforms are the intersection between cross targets available at
