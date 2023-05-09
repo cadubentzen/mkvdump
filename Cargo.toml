@@ -6,7 +6,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "MKV and WebM parser CLI tool"
 repository = "https://github.com/cadubentzen/mkvdump"
-keywords = ["mkv", "matroska", "webm", "cli", "ebml", "multimedia"]
+keywords = ["mkv", "matroska", "webm", "cli", "ebml"]
 categories = ["command-line-utilities", "multimedia", "parser-implementations"]
 exclude = ["inputs/*", "tests/snapshots/*", ".github/*"]
 
