@@ -1,10 +1,36 @@
-use mkvdump::parse_buffer_to_end;
+use mkvdump::{parse_element_or_skip_corrupted, tree::build_element_trees, Body, Element};
+
+// TODO: decide where to place this helper. Currently duplicated.
+fn parse_elements(input: &[u8], show_position: bool) -> Vec<Element> {
+    let mut elements = Vec::<Element>::new();
+    let mut read_buffer = input;
+    let mut position = show_position.then_some(0);
+
+    while let Ok((new_read_buffer, mut element)) = parse_element_or_skip_corrupted(read_buffer) {
+        element.header.position = position;
+        position = position.map(|p| {
+            if let Body::Master = element.body {
+                p + element.header.header_size
+            } else {
+                // It's safe to unwrap because all non-Master elements have a set size
+                p + element.header.size.unwrap()
+            }
+        });
+        elements.push(element);
+        if new_read_buffer.is_empty() {
+            break;
+        }
+        read_buffer = new_read_buffer;
+    }
+    elements
+}
 
 macro_rules! snapshot_test {
     ($test_name:ident, $filename:expr) => {
         #[test]
         fn $test_name() {
-            insta::assert_yaml_snapshot!(parse_buffer_to_end(include_bytes!($filename), false));
+            let elements = parse_elements(include_bytes!($filename), false);
+            insta::assert_yaml_snapshot!(build_element_trees(&elements));
         }
     };
 }

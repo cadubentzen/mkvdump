@@ -1,3 +1,6 @@
+#![warn(missing_docs)]
+#![doc = include_str!("../README.md")]
+
 use std::ops::Not;
 
 use chrono::prelude::*;
@@ -8,13 +11,17 @@ use serde_with::skip_serializing_none;
 
 mod ebml;
 mod elements;
-pub mod enumerations;
+mod enumerations;
 mod error;
+/// The tree module contains helpers for building tree
+/// structures from parsed elements
+pub mod tree;
 
 pub use crate::elements::{Id, Type};
 pub use crate::enumerations::Enumeration;
 pub use error::Error;
 
+/// Result type helper
 pub type Result<T> = std::result::Result<T, Error>;
 type IResult<T, O> = Result<(T, O)>;
 
@@ -24,7 +31,7 @@ fn take<'a>(
     nom::bytes::streaming::take(len)
 }
 
-fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
+pub(crate) fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
     let (input, first_byte) = peek(take(1usize))(input)?;
     let first_byte = first_byte[0];
 
@@ -43,16 +50,22 @@ fn parse_id(input: &[u8]) -> IResult<&[u8], Id> {
     Ok((input, Id::new(id)))
 }
 
+/// Represents an [EBML Header](https://github.com/ietf-wg-cellar/ebml-specification/blob/master/specification.markdown#ebml-header)
 #[skip_serializing_none]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Header {
+    /// The Element ID
     pub id: Id,
+    /// Size of the header itself
     pub header_size: usize,
+    /// Size of the Element Body
     #[serde(skip_serializing)]
     pub body_size: Option<usize>,
+    /// Size of Header + Body
     #[serialize_always]
     #[serde(serialize_with = "serialize_size")]
     pub size: Option<usize>,
+    /// Position in the input
     pub position: Option<usize>,
 }
 
@@ -159,7 +172,7 @@ enum Lacing {
     FixedSize,
 }
 
-// https://www.matroska.org/technical/basics.html#block-structure
+/// A Matroska [Block](https://www.matroska.org/technical/basics.html#block-structure)
 #[skip_serializing_none]
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Block {
@@ -171,7 +184,7 @@ pub struct Block {
     num_frames: Option<u8>,
 }
 
-// https://www.matroska.org/technical/basics.html#simpleblock-structure
+/// A Matroska [SimpleBlock](https://www.matroska.org/technical/basics.html#simpleblock-structure)
 #[skip_serializing_none]
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct SimpleBlock {
@@ -187,15 +200,22 @@ pub struct SimpleBlock {
     num_frames: Option<u8>,
 }
 
+/// Enumeration with possible binary value payloads
 #[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum BinaryValue {
+    /// A standard binary payload that will not be parsed further
     #[serde(serialize_with = "serialize_short_payloads")]
     Standard(Vec<u8>),
+    /// A SeekId payload
     SeekId(Id),
+    /// A SimpleBlock
     SimpleBlock(SimpleBlock),
+    /// A Block
     Block(Block),
+    /// Void
     Void,
+    /// Represents the payload of a corrupted region of the file
     Corrupted,
 }
 
@@ -229,32 +249,40 @@ fn serialize_short_payloads<S: Serializer>(
     }
 }
 
+/// An [EBML Body](https://github.com/ietf-wg-cellar/ebml-specification/blob/master/specification.markdown#ebml-body)
 #[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum Body {
+    /// A Master Body contains no data, but will contain zero or more elements
+    /// that come after it.
     Master,
+    /// An Unsigned Integer that may contain a known Enumeration
     Unsigned(Enumeration),
+    /// A Signed Integer
     Signed(i64),
+    /// A Float
     Float(f64),
+    /// A String
     String(String),
+    /// An UTF-8 String
     Utf8(String),
+    /// A Date
     Date(DateTime<Utc>),
+    /// A Binary
     Binary(BinaryValue),
 }
 
+/// Represents an EBML Element
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Element {
+    /// The Header
     #[serde(flatten)]
     pub header: Header,
+    /// The Body
     #[serde(rename = "value")]
     pub body: Body,
 }
 
-// If we ever hit a damaged element, we'll try to recover by finding
-// one of those IDs next to start clean. Those are the 4-bytes IDs,
-// which according to the EBML spec:
-// "Four-octet Element IDs are somewhat special in that they are useful
-// for resynchronizing to major structures in the event of data corruption or loss."
 const SYNC_ELEMENT_IDS: &[Id] = &[
     Id::Cluster,
     Id::Ebml,
@@ -268,7 +296,14 @@ const SYNC_ELEMENT_IDS: &[Id] = &[
     Id::Tags,
 ];
 
-fn find_valid_element(input: &[u8]) -> IResult<&[u8], Element> {
+/// Find a valid element to restart parsing from.
+///
+/// If we ever hit a damaged element, we can try to recover by finding
+/// one of those IDs next to start clean. Those are the 4-bytes IDs,
+/// which according to the EBML spec:
+/// "Four-octet Element IDs are somewhat special in that they are useful
+/// for resynchronizing to major structures in the event of data corruption or loss."
+pub fn find_valid_element(input: &[u8]) -> IResult<&[u8], Element> {
     const SYNC_ID_LEN: usize = 4;
     for (offset, window) in input.windows(SYNC_ID_LEN).enumerate() {
         for sync_id in SYNC_ELEMENT_IDS {
@@ -288,7 +323,8 @@ fn find_valid_element(input: &[u8]) -> IResult<&[u8], Element> {
     Err(Error::ValidElementNotFound)
 }
 
-fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
+/// Parse an element
+pub fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
     let (input, header) = parse_header(original_input)?;
     let element_type = header.id.get_type();
 
@@ -496,109 +532,9 @@ fn parse_simple_block(input: &[u8]) -> IResult<&[u8], SimpleBlock> {
     ))
 }
 
-#[derive(Debug, PartialEq, Serialize)]
-pub struct MasterElement {
-    #[serde(flatten)]
-    header: Header,
-    children: Vec<ElementTree>,
-}
-
-#[derive(Debug, PartialEq, Serialize)]
-#[serde(untagged)]
-pub enum ElementTree {
-    Normal(Element),
-    Master(MasterElement),
-}
-
-impl Id {
-    fn can_be_children_of(&self, other: &Id) -> bool {
-        !matches!((self, other), (Id::Cluster, Id::Cluster) | (Id::Ebml, _))
-    }
-}
-
-fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
-    let mut trees = Vec::<ElementTree>::new();
-
-    let mut index = 0;
-    while index < elements.len() {
-        let element = &elements[index];
-        match element.body {
-            Body::Master => {
-                // parse_header() already handles Unknown sizes.
-                let mut size_remaining = element.header.body_size.unwrap_or(usize::MAX);
-
-                let mut children = Vec::<Element>::new();
-                while size_remaining > 0 {
-                    index += 1;
-
-                    if let Some(next_child) = elements.get(index) {
-                        if !next_child.header.id.can_be_children_of(&element.header.id) {
-                            index -= 1;
-                            break;
-                        }
-
-                        size_remaining -= if let Body::Master = next_child.body {
-                            // Master elements' body size should not count in the recursion
-                            // as the children would duplicate the size count, so
-                            // we only consider the header size on the calculation.
-                            next_child.header.header_size
-                        } else {
-                            next_child
-                                .header
-                                .size
-                                .expect("Only Master elements can have unknown size")
-                        };
-                        children.push(next_child.clone());
-                    } else {
-                        // Elements have ended before reaching the size of the master element
-                        break;
-                    }
-                }
-                trees.push(ElementTree::Master(MasterElement {
-                    header: element.header.clone(),
-                    children: build_element_trees(&children),
-                }));
-            }
-            _ => {
-                trees.push(ElementTree::Normal(element.clone()));
-            }
-        }
-        index += 1;
-    }
-    trees
-}
-
-fn parse_element_or_skip_corrupted(input: &[u8]) -> IResult<&[u8], Element> {
+/// Helper to add resiliency to corrupt inputs
+pub fn parse_element_or_skip_corrupted(input: &[u8]) -> IResult<&[u8], Element> {
     parse_element(input).or_else(|_| find_valid_element(input))
-}
-
-pub fn parse_elements(input: &[u8], show_position: bool) -> Vec<Element> {
-    let mut elements = Vec::<Element>::new();
-    let mut read_buffer = input;
-    let mut position = show_position.then_some(0);
-
-    while let Ok((new_read_buffer, mut element)) = parse_element_or_skip_corrupted(read_buffer) {
-        element.header.position = position;
-        position = position.map(|p| {
-            if let Body::Master = element.body {
-                p + element.header.header_size
-            } else {
-                // It's safe to unwrap because all non-Master elements have a set size
-                p + element.header.size.unwrap()
-            }
-        });
-        elements.push(element);
-        if new_read_buffer.is_empty() {
-            break;
-        }
-        read_buffer = new_read_buffer;
-    }
-    elements
-}
-
-pub fn parse_buffer_to_end(input: &[u8], show_position: bool) -> Vec<ElementTree> {
-    let elements = parse_elements(input, show_position);
-    build_element_trees(&elements)
 }
 
 #[cfg(test)]
@@ -955,80 +891,6 @@ mod tests {
     }
 
     #[test]
-    fn test_build_element_trees() {
-        let elements = [
-            Element {
-                header: Header::new(Id::Ebml, 5, 31),
-                body: Body::Master,
-            },
-            Element {
-                header: Header::new(Id::EbmlVersion, 3, 1),
-                body: Body::Unsigned(1.into()),
-            },
-            Element {
-                header: Header::new(Id::EbmlReadVersion, 3, 1),
-                body: Body::Unsigned(1.into()),
-            },
-            Element {
-                header: Header::new(Id::EbmlMaxIdLength, 3, 1),
-                body: Body::Unsigned(4.into()),
-            },
-            Element {
-                header: Header::new(Id::EbmlMaxSizeLength, 3, 1),
-                body: Body::Unsigned(8.into()),
-            },
-            Element {
-                header: Header::new(Id::DocType, 3, 4),
-                body: Body::String("webm".to_string()),
-            },
-            Element {
-                header: Header::new(Id::DocTypeVersion, 3, 1),
-                body: Body::Unsigned(4.into()),
-            },
-            Element {
-                header: Header::new(Id::DocTypeReadVersion, 3, 1),
-                body: Body::Unsigned(2.into()),
-            },
-        ];
-
-        let expected = vec![ElementTree::Master(MasterElement {
-            header: Header::new(Id::Ebml, 5, 31),
-            children: vec![
-                ElementTree::Normal(Element {
-                    header: Header::new(Id::EbmlVersion, 3, 1),
-                    body: Body::Unsigned(1.into()),
-                }),
-                ElementTree::Normal(Element {
-                    header: Header::new(Id::EbmlReadVersion, 3, 1),
-                    body: Body::Unsigned(1.into()),
-                }),
-                ElementTree::Normal(Element {
-                    header: Header::new(Id::EbmlMaxIdLength, 3, 1),
-                    body: Body::Unsigned(4.into()),
-                }),
-                ElementTree::Normal(Element {
-                    header: Header::new(Id::EbmlMaxSizeLength, 3, 1),
-                    body: Body::Unsigned(8.into()),
-                }),
-                ElementTree::Normal(Element {
-                    header: Header::new(Id::DocType, 3, 4),
-                    body: Body::String("webm".to_string()),
-                }),
-                ElementTree::Normal(Element {
-                    header: Header::new(Id::DocTypeVersion, 3, 1),
-                    body: Body::Unsigned(4.into()),
-                }),
-                ElementTree::Normal(Element {
-                    header: Header::new(Id::DocTypeReadVersion, 3, 1),
-                    body: Body::Unsigned(2.into()),
-                }),
-            ],
-        })];
-
-        assert_eq!(build_element_trees(&elements), expected);
-    }
-
-    #[test]
     fn test_binary_custom_serializer() {
         let binary_value = BinaryValue::Standard(vec![1, 2, 3]);
         assert_eq!(
@@ -1056,32 +918,6 @@ mod tests {
                 .unwrap()
                 .trim(),
             "5"
-        );
-    }
-
-    #[test]
-    fn test_show_position() {
-        const INPUT: &[u8] = include_bytes!("../inputs/matroska-test-suite/test7.mkv");
-        let elements = parse_elements(INPUT, true);
-        for element in elements {
-            // Corrupted elements won't match as we ignore their ID due to invalid content.
-            if element.header.id == Id::Corrupted {
-                continue;
-            }
-            let (_, id_at_position) =
-                parse_id(&INPUT[element.header.position.unwrap() as usize..]).unwrap();
-            assert_eq!(id_at_position, element.header.id);
-        }
-    }
-
-    #[test]
-    fn test_find_valid_element() {
-        // impossible to find in an empty array
-        assert_eq!(find_valid_element(&[]), Err(Error::ValidElementNotFound));
-        // can not find in a bonkers array
-        assert_eq!(
-            find_valid_element(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-            Err(Error::ValidElementNotFound)
         );
     }
 }

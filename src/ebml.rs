@@ -2,15 +2,23 @@ macro_rules! ebml_elements {
     ($($(#[doc = $doc:literal])* name = $element_name:ident, original_name = $original_name:expr, id = $id:expr, variant = $variant:ident;)+) => {
         use serde::{Serialize, Serializer};
 
-        // Matroska Element Type.
+        /// Matroska Element Type.
         pub enum Type {
+            /// Unsigned
             Unsigned,
+            /// Signed
             Signed,
+            /// Float
             Float,
+            /// String
             String,
+            /// Utf8
             Utf8,
+            /// Date
             Date,
+            /// Master
             Master,
+            /// Binary
             Binary,
         }
 
@@ -28,6 +36,8 @@ macro_rules! ebml_elements {
         }
 
         impl Id {
+            /// Build a new ID from an u32. If the value does not represent a known element,
+            /// an Unknown ID will be created.
             pub fn new(id: u32) -> Self {
                 match id {
                     $($id => Self::$element_name,)+
@@ -35,10 +45,12 @@ macro_rules! ebml_elements {
                 }
             }
 
+            /// Build a special corrupted ID
             pub fn corrupted() -> Self {
                 Self::Corrupted
             }
 
+            /// Get type of element for this ID
             pub fn get_type(&self) -> Type {
                 match self {
                     $(Id::$element_name => Type::$variant,)+
@@ -46,6 +58,7 @@ macro_rules! ebml_elements {
                 }
             }
 
+            /// Get underlying integer value
             pub fn get_value(&self) -> Option<u32> {
                 match self {
                     $(Id::$element_name => Some($id),)+
@@ -102,6 +115,7 @@ macro_rules! ebml_enumerations {
         }
 
         impl Enumeration {
+            /// Create new enumeration
             pub fn new(id: &Id, value: u64) -> Self {
                 match id {
                     $(
