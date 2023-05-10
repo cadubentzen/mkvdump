@@ -920,4 +920,15 @@ mod tests {
             "5"
         );
     }
+
+    #[test]
+    fn test_find_valid_element() {
+        // impossible to find in an empty array
+        assert_eq!(find_valid_element(&[]), Err(Error::ValidElementNotFound));
+        // can not find in a bonkers array
+        assert_eq!(
+            find_valid_element(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+            Err(Error::ValidElementNotFound)
+        );
+    }
 }
