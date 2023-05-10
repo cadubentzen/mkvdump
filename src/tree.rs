@@ -1,4 +1,3 @@
-#![warn(missing_docs)]
 ///! The tree module contains helpers for building tree
 ///! structures from parsed elements
 use serde::Serialize;

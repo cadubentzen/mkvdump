@@ -1,4 +1,4 @@
-#![warn(missing_docs)]
+#![forbid(missing_docs)]
 #![doc = include_str!("../README.md")]
 
 use std::ops::Not;
@@ -10,15 +10,17 @@ use serde::{Serialize, Serializer};
 use serde_with::skip_serializing_none;
 
 mod ebml;
-mod elements;
-mod enumerations;
+/// Matroska elements
+pub mod elements;
+/// Matroska enumerations
+pub mod enumerations;
 mod error;
 /// The tree module contains helpers for building tree
 /// structures from parsed elements
 pub mod tree;
 
-pub use crate::elements::{Id, Type};
-pub use crate::enumerations::Enumeration;
+use crate::elements::{Id, Type};
+use crate::enumerations::Enumeration;
 pub use error::Error;
 
 /// Result type helper

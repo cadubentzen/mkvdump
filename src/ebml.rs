@@ -81,21 +81,23 @@ macro_rules! ebml_elements {
 }
 
 macro_rules! ebml_enumerations {
-    ($($id:ident { $($(#[doc = $doc:expr])* $variant:ident = $value:expr, original_label = $original_label:expr;)+ };)+) => {
+    ($($(#[doc = $enum_doc:expr])* $id:ident { $($(#[doc = $variant_doc:expr])* $variant:ident = $value:expr, original_label = $original_label:expr;)+ };)+) => {
         use crate::elements::Id;
         use serde::Serialize;
 
         $(
+            $(#[doc = $enum_doc])*
             #[derive(Debug, PartialEq, Eq, Clone, Serialize)]
             pub enum $id {
                 $(
-                    $(#[doc = $doc])*
+                    $(#[doc = $variant_doc])*
                     #[serde(rename = $original_label)]
                     $variant,
                 )+
             }
 
             impl $id {
+                /// Create a new instance
                 pub fn new(value: u64) -> Option<Self> {
                     match value {
                         $($value => Some(Self::$variant),)+
@@ -111,7 +113,10 @@ macro_rules! ebml_enumerations {
         pub enum Enumeration {
             /// Uknown variant, which simply carries the value.
             Unknown(u64),
-            $($id($id),)+
+            $(
+                $(#[doc = $enum_doc])*
+                $id($id),
+            )+
         }
 
         impl Enumeration {

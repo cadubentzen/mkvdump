@@ -86,7 +86,7 @@ fn main() -> io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use mkvdump::{parse_element, Id};
+    use mkvdump::{parse_element, elements::Id};
 
     use super::*;
 

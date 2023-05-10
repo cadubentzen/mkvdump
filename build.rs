@@ -183,27 +183,43 @@ fn create_enumerations_file(elements: &[Element]) -> std::io::Result<()> {
         }
         let enum_name = element.name.to_case(Case::Pascal);
         if let Some(details) = &element.details {
+            let mut documentation = None;
             for detail in details {
-                if let ElementDetail::Restriction(restriction) = detail {
-                    writeln!(file, "    {} {{", enum_name)?;
-                    for enumeration in &restriction.enums {
-                        if let Some(docs) = &enumeration.documentation {
-                            for doc in docs {
-                                doc.text.split('\n').filter(|s| !s.is_empty()).for_each(
-                                    |doc_line| writeln!(file, "        /// {}", doc_line).unwrap(),
-                                );
-                            }
-                        } else {
-                            writeln!(file, "        /// {}", enumeration.label)?;
-                        }
-                        let label = apply_label_quirks(&enumeration.label, &mut reserved_index);
-                        writeln!(
-                            file,
-                            "        {} = {}, original_label = \"{}\";",
-                            label, enumeration.value, enumeration.label
-                        )?;
+                match detail {
+                    ElementDetail::Documentation(doc) => {
+                        documentation = Some(doc.text.clone());
                     }
-                    writeln!(file, "    }};")?;
+                    ElementDetail::Restriction(restriction) => {
+                        if let Some(ref doc) = documentation {
+                            doc.split('\n')
+                                .filter(|s| !s.is_empty())
+                                .for_each(|doc_line| {
+                                    writeln!(file, "    /// {}", doc_line).unwrap();
+                                });
+                        }
+                        writeln!(file, "    {} {{", enum_name)?;
+                        for enumeration in &restriction.enums {
+                            if let Some(docs) = &enumeration.documentation {
+                                for doc in docs {
+                                    doc.text.split('\n').filter(|s| !s.is_empty()).for_each(
+                                        |doc_line| {
+                                            writeln!(file, "        /// {}", doc_line).unwrap()
+                                        },
+                                    );
+                                }
+                            } else {
+                                writeln!(file, "        /// {}", enumeration.label)?;
+                            }
+                            let label = apply_label_quirks(&enumeration.label, &mut reserved_index);
+                            writeln!(
+                                file,
+                                "        {} = {}, original_label = \"{}\";",
+                                label, enumeration.value, enumeration.label
+                            )?;
+                        }
+                        writeln!(file, "    }};")?;
+                    }
+                    _ => (),
                 }
             }
         }
