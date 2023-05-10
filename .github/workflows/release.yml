@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - 'main'
-      - 'debian'
     tags:
       - 'v*'
 
@@ -164,8 +163,7 @@ jobs:
       - standard
       - cross
       - debian
-    # FIXME: remove comment
-    # if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Checkout
         uses: actions/checkout@v3
