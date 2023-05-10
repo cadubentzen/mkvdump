@@ -188,6 +188,10 @@ A command-line tool for debugging Matroska/WebM files in common formats.
 
 ## Getting mkvdump
 
+### Debian package
+
+Ubuntu users (>= 20.04) can install mkvdump via the DEB package available in the [releases page](https://github.com/cadubentzen/mkvdump/releases).
+
 ### Cargo
 
 If you have [cargo-binstall](https://github.com/cargo-bins/cargo-binstall) installed, you can install mkvdump with
