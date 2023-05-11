@@ -211,7 +211,6 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          draft: true
           files: |
             mkvdump-${{ github.ref_name }}-*.tar.gz
             mkvdump-${{ github.ref_name }}-*.zip
