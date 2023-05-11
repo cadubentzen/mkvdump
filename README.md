@@ -192,6 +192,20 @@ A command-line tool for debugging Matroska/WebM files in common formats.
 
 Ubuntu users (>= 20.04) can install mkvdump via the DEB package available in the [releases page](https://github.com/cadubentzen/mkvdump/releases).
 
+### Homebrew
+
+Linux and macOS users on x86_64 devices can install mkvdump via the [Homebrew tap](https://github.com/cadubentzen/homebrew-mkvdump):
+
+```bash
+$ brew install cadubentzen/mkvdump/mkvdump
+```
+
+macOS users on M1 or M2 devices need to use
+
+```bash
+$ brew install --build-from-source cadubentzen/mkvdump/mkvdump
+```
+
 ### Cargo
 
 If you have [cargo-binstall](https://github.com/cargo-bins/cargo-binstall) installed, you can install mkvdump with
