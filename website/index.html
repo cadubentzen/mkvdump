@@ -2,11 +2,14 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="./output.css" rel="stylesheet" />
     <title>mkvdump</title>
   </head>
   <body>
+    <h1 class="text-3xl">mkvdump</h1>
     <input type="file" id="mkv-input" accept=".mkv, .webm, .hdr, .chk" />
-    <pre id="mkvdump"></pre>
+    <json-viewer id="mkvdump"></json-viewer>
     <script src="./bootstrap.js"></script>
   </body>
 </html>

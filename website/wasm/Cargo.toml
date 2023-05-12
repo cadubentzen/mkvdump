@@ -25,8 +25,3 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
-
-[profile.release]
-lto = true
-opt-level = "s"
-codegen-units = 1
