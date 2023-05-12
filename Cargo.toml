@@ -10,7 +10,8 @@ keywords = ["mkv", "matroska", "webm", "cli", "ebml"]
 categories = ["command-line-utilities", "multimedia", "parser-implementations"]
 exclude = ["inputs/*", "tests/snapshots/*", ".github/*"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace]
+members = ["website/wasm"]
 
 [dependencies]
 nom = "7"
