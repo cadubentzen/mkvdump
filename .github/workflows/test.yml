@@ -52,5 +52,15 @@ jobs:
       - name: Toolchain setup
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Check
+      - name: Test
         run: cargo test --locked --all-features --all-targets
+
+  test-32-bit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: taiki-e/install-action@cross
+
+      - name: Test
+        run: cross test --release --target i686-unknown-linux-gnu
