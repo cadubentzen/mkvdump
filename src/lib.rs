@@ -141,7 +141,7 @@ fn parse_varint(first_input: &[u8]) -> IResult<&[u8], Option<usize>> {
     //
     // In 32-bit plaforms, the conversion from u64 to usize will fail if the value
     // is bigger than u32::MAX.
-    let result = (value != bitmask).then_some(value.try_into()?);
+    let result = (value != bitmask).then(|| value.try_into()).transpose()?;
 
     Ok((input, result))
 }
