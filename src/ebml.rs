@@ -130,12 +130,6 @@ macro_rules! ebml_enumerations {
                 }
             }
         }
-
-        impl From<u64> for Enumeration {
-            fn from(value: u64) -> Self {
-                Self::Unknown(value)
-            }
-        }
     };
 }
 
