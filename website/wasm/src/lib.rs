@@ -1,6 +1,6 @@
 mod utils;
 
-use mkvdump::{parse_element, parse_element_or_skip_corrupted, tree::build_element_trees, Element};
+use mkvdump::{parse_element_or_skip_corrupted, tree::build_element_trees, Element};
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
@@ -11,14 +11,11 @@ macro_rules! log {
 }
 
 #[wasm_bindgen]
-pub fn parse_mkv(input: &[u8]) -> JsValue {
+pub fn parse_mkv(input: &[u8]) -> Result<JsValue, JsValue> {
     utils::set_panic_hook();
 
-    log!("input size: {}", input.len());
-
-    build_element_trees(&parse_elements(input))
-        .serialize(&serde_wasm_bindgen::Serializer::json_compatible())
-        .unwrap()
+    Ok(build_element_trees(&parse_elements(input))
+        .serialize(&serde_wasm_bindgen::Serializer::json_compatible())?)
 }
 
 fn parse_elements(input: &[u8]) -> Vec<Element> {
@@ -26,9 +23,8 @@ fn parse_elements(input: &[u8]) -> Vec<Element> {
     let mut read_buffer = input;
 
     loop {
-        match parse_element(read_buffer) {
+        match parse_element_or_skip_corrupted(read_buffer) {
             Ok((new_read_buffer, element)) => {
-                log!("new element: {:?}", element.header.id);
                 elements.push(element);
                 if new_read_buffer.is_empty() {
                     break;

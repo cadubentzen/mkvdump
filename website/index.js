@@ -4,6 +4,12 @@ const mkvInput = document.getElementById("mkv-input");
 const mkvdumpPre = document.getElementById("mkvdump");
 
 mkvInput.addEventListener("change", async (event) => {
+  mkvdumpPre.textContent = "";
+
+  if (event.target.files.length == 0) {
+    return;
+  }
+
   const mkvFile = event.target.files[0];
   console.log(mkvFile);
 
