@@ -2,11 +2,11 @@ name: test
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
     tags:
-      - 'v*'
+      - "v*"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   CARGO_TERM_COLOR: always
@@ -19,24 +19,24 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Toolchain setup
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        components: llvm-tools-preview
+      - name: Toolchain setup
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
 
-    - name: cargo install cargo-llvm-cov
-      uses: taiki-e/install-action@cargo-llvm-cov
+      - name: cargo install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
 
-    - name: cargo llvm-cov
-      run: cargo llvm-cov --locked --all-features --lcov --output-path lcov.info
+      - name: cargo llvm-cov
+        run: cargo llvm-cov --locked --all-features --lcov --output-path lcov.info
 
-    - name: Upload to codecov.io
-      uses: codecov/codecov-action@v3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: true
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
 
   os-check:
     runs-on: ${{ matrix.os }}
