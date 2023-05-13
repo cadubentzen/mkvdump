@@ -49,3 +49,15 @@ impl From<nom::Err<()>> for Error {
         }
     }
 }
+
+// FIXME(#53) This is mostly to keep coverage happy, but that error type will
+// in practice never be instantiated as we don't use combinators in nom.
+// After removing nom as a dependency we should be able to remove this test as well.
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn parser() {
+        assert_eq!(Error::Parser, nom::Err::Error(()).into());
+    }
+}
