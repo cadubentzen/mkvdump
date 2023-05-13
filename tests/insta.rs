@@ -17,11 +17,12 @@ fn parse_elements(input: &[u8], show_position: bool) -> Vec<Element> {
             }
         });
         elements.push(element);
-        if new_read_buffer.is_empty() {
+        read_buffer = new_read_buffer;
+        if read_buffer.is_empty() {
             break;
         }
-        read_buffer = new_read_buffer;
     }
+    assert_eq!(read_buffer.len(), 0);
     elements
 }
 
