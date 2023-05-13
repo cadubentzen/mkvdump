@@ -563,12 +563,7 @@ mod tests {
         assert_eq!(parse_id(&[0x23, 0x83, 0xE3]), Ok((EMPTY, Id::FrameRate)));
 
         // 1 byte missing from FrameRate (3-bytes long)
-        assert_eq!(
-            parse_id(&[0x23, 0x83]),
-            Err(Error::Parsing(nom::Err::Incomplete(nom::Needed::Size(
-                1.try_into().unwrap()
-            ))))
-        );
+        assert_eq!(parse_id(&[0x23, 0x83]), Err(Error::NeedData));
 
         // Longer than 4 bytes
         const FAILURE_INPUT: &[u8] = &[0x08, 0x45, 0xDF, 0xA3];
