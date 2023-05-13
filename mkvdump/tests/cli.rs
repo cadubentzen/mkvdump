@@ -6,7 +6,7 @@ fn command() -> Command {
 
 #[test]
 fn basic() {
-    const INPUT: &str = "inputs/encrypted.hdr";
+    const INPUT: &str = "tests/inputs/encrypted.hdr";
     command().arg(INPUT).assert().success();
     command()
         .arg("-f")

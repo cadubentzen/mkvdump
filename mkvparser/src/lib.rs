@@ -1,5 +1,9 @@
 #![forbid(missing_docs)]
-#![doc = include_str!("../README.md")]
+
+//! Parse MKV/WebM content
+//!
+//! Provides a set of Matroska structures and
+//! functions to parse Matroska elements.
 
 use std::ops::Not;
 
