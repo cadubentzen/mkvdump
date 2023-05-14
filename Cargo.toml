@@ -25,3 +25,9 @@ insta = { version = "1.18.1", features = ["yaml"] }
 
 [workspace]
 members = ["mkvparser"]
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
