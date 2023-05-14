@@ -1,4 +1,4 @@
-use mkvdump::{parse_element_or_skip_corrupted, tree::build_element_trees, Body, Element};
+use mkvparser::{parse_element_or_skip_corrupted, tree::build_element_trees, Body, Element};
 
 // TODO: decide where to place this helper. Currently duplicated.
 fn parse_elements(input: &[u8], show_position: bool) -> Vec<Element> {
@@ -38,29 +38,29 @@ macro_rules! snapshot_test {
 
 snapshot_test!(
     test_parse_incomplete_file_should_not_panic,
-    "../inputs/incomplete.hdr"
+    "inputs/incomplete.hdr"
 );
-snapshot_test!(test_parse_header_encrypted, "../inputs/encrypted.hdr");
+snapshot_test!(test_parse_header_encrypted, "inputs/encrypted.hdr");
 
 // File was generated with:
 // ffmpeg -f lavfi -i testsrc -c:v libx264 -frames:v 2 -metadata creation_time="2022-08-11T08:27:15Z" -f matroska test.mkv
-snapshot_test!(test_parse_file_with_dateutc, "../inputs/dateutc.mkv");
+snapshot_test!(test_parse_file_with_dateutc, "inputs/dateutc.mkv");
 
 // Tests from Matroska test suite
-snapshot_test!(test1, "../inputs/matroska-test-suite/test1.mkv");
-snapshot_test!(test2, "../inputs/matroska-test-suite/test2.mkv");
-snapshot_test!(test3, "../inputs/matroska-test-suite/test3.mkv");
-snapshot_test!(test4, "../inputs/matroska-test-suite/test4.mkv");
-snapshot_test!(test5, "../inputs/matroska-test-suite/test5.mkv");
-snapshot_test!(test6, "../inputs/matroska-test-suite/test6.mkv");
-snapshot_test!(test7, "../inputs/matroska-test-suite/test7.mkv");
-snapshot_test!(test8, "../inputs/matroska-test-suite/test8.mkv");
+snapshot_test!(test1, "inputs/matroska-test-suite/test1.mkv");
+snapshot_test!(test2, "inputs/matroska-test-suite/test2.mkv");
+snapshot_test!(test3, "inputs/matroska-test-suite/test3.mkv");
+snapshot_test!(test4, "inputs/matroska-test-suite/test4.mkv");
+snapshot_test!(test5, "inputs/matroska-test-suite/test5.mkv");
+snapshot_test!(test6, "inputs/matroska-test-suite/test6.mkv");
+snapshot_test!(test7, "inputs/matroska-test-suite/test7.mkv");
+snapshot_test!(test8, "inputs/matroska-test-suite/test8.mkv");
 
 snapshot_test!(
     test_two_inits_segment_unknown_size,
-    "../inputs/two_inits_segment_unknown_size.webm"
+    "inputs/two_inits_segment_unknown_size.webm"
 );
 snapshot_test!(
     test_init_after_cluster_unknown_size,
-    "../inputs/init_after_cluster_unknown_size.webm"
+    "inputs/init_after_cluster_unknown_size.webm"
 );

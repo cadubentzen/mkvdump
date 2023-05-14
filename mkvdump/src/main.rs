@@ -1,12 +1,15 @@
+#![doc = include_str!("../../README.md")]
+
 use std::{
     fs::File,
     io::{self, Read},
 };
 
 use clap::{Parser, ValueEnum};
-use mkvdump::{parse_element_or_skip_corrupted, tree::build_element_trees, Body, Element};
+use mkvparser::{parse_element_or_skip_corrupted, tree::build_element_trees, Body, Element};
 use serde::Serialize;
 
+#[doc(hidden)]
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
@@ -26,6 +29,7 @@ struct Args {
     linear_output: bool,
 }
 
+#[doc(hidden)]
 #[derive(ValueEnum, Clone, PartialEq, Eq)]
 enum Format {
     Json,
@@ -33,6 +37,7 @@ enum Format {
 }
 
 // TODO: decide where to place this helper. Currently duplicated.
+#[doc(hidden)]
 fn parse_elements(input: &[u8], show_position: bool) -> Vec<Element> {
     let mut elements = Vec::<Element>::new();
     let mut read_buffer = input;
@@ -57,6 +62,7 @@ fn parse_elements(input: &[u8], show_position: bool) -> Vec<Element> {
     elements
 }
 
+#[doc(hidden)]
 fn print_serialized<T: Serialize>(elements: &[T], format: &Format) {
     let serialized = match format {
         Format::Json => serde_json::to_string_pretty(elements).unwrap(),
@@ -65,6 +71,7 @@ fn print_serialized<T: Serialize>(elements: &[T], format: &Format) {
     println!("{}", serialized);
 }
 
+#[doc(hidden)]
 fn main() -> io::Result<()> {
     let args = Args::parse();
     let mut file = File::open(args.filename)?;
@@ -86,13 +93,13 @@ fn main() -> io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use mkvdump::{parse_element, elements::Id};
+    use mkvparser::{elements::Id, parse_element};
 
     use super::*;
 
     #[test]
     fn test_show_position() {
-        const INPUT: &[u8] = include_bytes!("../../inputs/matroska-test-suite/test7.mkv");
+        const INPUT: &[u8] = include_bytes!("../tests/inputs/matroska-test-suite/test7.mkv");
         let elements = parse_elements(INPUT, true);
         for element in elements {
             // Corrupted elements won't match as we ignore their ID due to invalid content.
