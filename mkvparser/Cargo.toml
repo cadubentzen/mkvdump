@@ -1,6 +1,6 @@
 [package]
 name = "mkvparser"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Carlos Bentzen <cadubentzen@gmail.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
