@@ -1,6 +1,6 @@
 #![forbid(missing_docs)]
 
-//! Parse MKV/WebM content
+//! Parse MKV and WebM content
 //!
 //! Provides a set of Matroska structures and
 //! functions to parse Matroska elements.
