@@ -21,7 +21,7 @@ clap = { version = "4", features = ["derive"] }
 
 [dev-dependencies]
 assert_cmd = "2"
-insta = { version = "1.18.1", features = ["yaml"] }
+insta = { version = "1", features = ["yaml"] }
 
 [workspace]
 members = ["mkvparser"]
