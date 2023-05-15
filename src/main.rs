@@ -4,6 +4,7 @@ use clap::{Parser, ValueEnum};
 use mkvdump::parse_elements_from_file;
 use mkvparser::tree::build_element_trees;
 use serde::Serialize;
+use std::io::Write;
 
 const DEFAULT_BUFFER_SIZE: u64 = 64 * 1024 * 1024;
 
@@ -39,12 +40,20 @@ enum Format {
 }
 
 #[doc(hidden)]
-fn print_serialized<T: Serialize>(elements: &[T], format: &Format) {
+fn print_serialized<T: Serialize>(elements: &[T], format: &Format) -> anyhow::Result<()> {
     let serialized = match format {
         Format::Json => serde_json::to_string_pretty(elements).unwrap(),
         Format::Yaml => serde_yaml::to_string(elements).unwrap(),
     };
-    println!("{}", serialized);
+    // BrokenPipe errors are ok, as they can come from piping the output
+    // into other unix tools like less/head etc.
+    // https://github.com/rust-lang/rust/issues/46016#issuecomment-1242039016
+    match writeln!(std::io::stdout(), "{}", serialized) {
+        Ok(_) => Ok(()),
+        Err(e) if e.kind() == std::io::ErrorKind::BrokenPipe => Ok(()),
+        Err(e) => Err(e),
+    }?;
+    Ok(())
 }
 
 #[doc(hidden)]
@@ -57,10 +66,10 @@ fn main() -> anyhow::Result<()> {
     )?;
 
     if args.linear_output {
-        print_serialized(&elements, &args.format);
+        print_serialized(&elements, &args.format)?;
     } else {
         let element_trees = build_element_trees(&elements);
-        print_serialized(&element_trees, &args.format);
+        print_serialized(&element_trees, &args.format)?;
     }
 
     Ok(())
