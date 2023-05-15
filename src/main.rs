@@ -5,6 +5,8 @@ use mkvdump::parse_elements_from_file;
 use mkvparser::tree::build_element_trees;
 use serde::Serialize;
 
+const DEFAULT_BUFFER_SIZE: u64 = 64 * 1024 * 1024;
+
 #[doc(hidden)]
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -23,6 +25,10 @@ struct Args {
     /// Show output as a sequence, rather than a tree
     #[clap(short = 'l', long)]
     linear_output: bool,
+
+    /// Buffer size in bytes
+    #[clap(short = 'b', long, default_value_t = DEFAULT_BUFFER_SIZE)]
+    buffer_size: u64,
 }
 
 #[doc(hidden)]
@@ -44,7 +50,11 @@ fn print_serialized<T: Serialize>(elements: &[T], format: &Format) {
 #[doc(hidden)]
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
-    let elements = parse_elements_from_file(&args.filename, args.show_element_positions)?;
+    let elements = parse_elements_from_file(
+        &args.filename,
+        args.show_element_positions,
+        args.buffer_size,
+    )?;
 
     if args.linear_output {
         print_serialized(&elements, &args.format);

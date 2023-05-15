@@ -22,4 +22,10 @@ fn basic() {
         .success();
     command().arg("-p").arg(INPUT).assert().success();
     command().arg("-l").arg(INPUT).assert().success();
+    command()
+        .arg("-b")
+        .arg("65536")
+        .arg(INPUT)
+        .assert()
+        .success();
 }
