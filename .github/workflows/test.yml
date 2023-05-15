@@ -63,4 +63,4 @@ jobs:
       - uses: taiki-e/install-action@cross
 
       - name: Test
-        run: cross test --release --target i686-unknown-linux-gnu
+        run: cross test --workspace --release --target i686-unknown-linux-gnu
