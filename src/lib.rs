@@ -50,7 +50,6 @@ pub fn parse_elements_from_file(
         loop {
             match parse_element(&parse_buffer) {
                 Ok((new_parse_buffer, mut element)) => {
-                    println!("{element:?}");
                     insert_position(&mut element, &mut position);
                     elements.push(element);
                     parse_buffer = new_parse_buffer;
