@@ -5,7 +5,10 @@
 [![Crates.io](https://img.shields.io/crates/v/mkvdump.svg)](https://crates.io/crates/mkvdump)
 
 
-A command-line tool for debugging Matroska/WebM files in common formats.
+A command-line tool for debugging Matroska/WebM files. It displays all internal elements of a Matroska file as JSON or YAML.
+
+<details>
+<summary>Sample YAML output</summary>
 
 ```yaml
 - id: EBML
@@ -185,6 +188,13 @@ A command-line tool for debugging Matroska/WebM files in common formats.
         timestamp: 83
     # ...
 ```
+</details>
+
+## What's it useful for?
+
+This tool is similar to [mp4dump](https://www.bento4.com/documentation/mp4dump/), but for Matroska files. It may be useful for:
+- **snapshot testing:** you can save mkvdump's output for a produced Matroska asset and use that in a human-readable snapshot test.
+- **learning about EBML/Matroska/WebM:** with this tool you can see how a Matroska file is structured. I also learned by writing the tool 😊
 
 ## Getting mkvdump
 
