@@ -1,13 +1,11 @@
 #![doc = include_str!("../README.md")]
 
-use std::{
-    fs::File,
-    io::{self, Read},
-};
-
 use clap::{Parser, ValueEnum};
-use mkvparser::{parse_element_or_skip_corrupted, tree::build_element_trees, Body, Element};
+use mkvdump::parse_elements_from_file;
+use mkvparser::tree::build_element_trees;
 use serde::Serialize;
+
+const DEFAULT_BUFFER_SIZE: u64 = 64 * 1024 * 1024;
 
 #[doc(hidden)]
 #[derive(Parser)]
@@ -27,6 +25,10 @@ struct Args {
     /// Show output as a sequence, rather than a tree
     #[clap(short = 'l', long)]
     linear_output: bool,
+
+    /// Buffer size in bytes
+    #[clap(short = 'b', long, default_value_t = DEFAULT_BUFFER_SIZE)]
+    buffer_size: u64,
 }
 
 #[doc(hidden)]
@@ -34,32 +36,6 @@ struct Args {
 enum Format {
     Json,
     Yaml,
-}
-
-// TODO: decide where to place this helper. Currently duplicated.
-#[doc(hidden)]
-fn parse_elements(input: &[u8], show_position: bool) -> Vec<Element> {
-    let mut elements = Vec::<Element>::new();
-    let mut read_buffer = input;
-    let mut position = show_position.then_some(0);
-
-    while let Ok((new_read_buffer, mut element)) = parse_element_or_skip_corrupted(read_buffer) {
-        element.header.position = position;
-        position = position.map(|p| {
-            if let Body::Master = element.body {
-                p + element.header.header_size
-            } else {
-                // It's safe to unwrap because all non-Master elements have a set size
-                p + element.header.size.unwrap()
-            }
-        });
-        elements.push(element);
-        if new_read_buffer.is_empty() {
-            break;
-        }
-        read_buffer = new_read_buffer;
-    }
-    elements
 }
 
 #[doc(hidden)]
@@ -72,15 +48,14 @@ fn print_serialized<T: Serialize>(elements: &[T], format: &Format) {
 }
 
 #[doc(hidden)]
-fn main() -> io::Result<()> {
+fn main() -> anyhow::Result<()> {
     let args = Args::parse();
-    let mut file = File::open(args.filename)?;
+    let elements = parse_elements_from_file(
+        &args.filename,
+        args.show_element_positions,
+        args.buffer_size,
+    )?;
 
-    // TODO(#8): read chunked to not load entire file in memory.
-    let mut buffer = Vec::<u8>::new();
-    file.read_to_end(&mut buffer)?;
-
-    let elements = parse_elements(&buffer, args.show_element_positions);
     if args.linear_output {
         print_serialized(&elements, &args.format);
     } else {
@@ -89,26 +64,4 @@ fn main() -> io::Result<()> {
     }
 
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use mkvparser::{elements::Id, parse_element};
-
-    use super::*;
-
-    #[test]
-    fn test_show_position() {
-        const INPUT: &[u8] = include_bytes!("../tests/inputs/matroska-test-suite/test7.mkv");
-        let elements = parse_elements(INPUT, true);
-        for element in elements {
-            // Corrupted elements won't match as we ignore their ID due to invalid content.
-            if element.header.id == Id::Corrupted {
-                continue;
-            }
-            let (_, element_at_position) =
-                parse_element(&INPUT[element.header.position.unwrap() as usize..]).unwrap();
-            assert_eq!(element_at_position.header.id, element.header.id);
-        }
-    }
 }
