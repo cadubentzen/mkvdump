@@ -48,7 +48,7 @@ pub fn parse_elements_from_file(
 
         let mut parse_buffer = &buffer[..(filled + num_read)];
         loop {
-            match parse_element(&parse_buffer) {
+            match parse_element(parse_buffer) {
                 Ok((new_parse_buffer, mut element)) => {
                     insert_position(&mut element, &mut position);
                     elements.push(element);

@@ -228,9 +228,9 @@ pub enum BinaryValue {
 impl BinaryValue {
     fn new(id: &Id, value: &[u8]) -> Result<Self> {
         Ok(match id {
-            Id::SeekId => BinaryValue::SeekId(parse_id(&value)?.1),
-            Id::SimpleBlock => BinaryValue::SimpleBlock(parse_simple_block(&value)?.1),
-            Id::Block => BinaryValue::Block(parse_block(&value)?.1),
+            Id::SeekId => BinaryValue::SeekId(parse_id(value)?.1),
+            Id::SimpleBlock => BinaryValue::SimpleBlock(parse_simple_block(value)?.1),
+            Id::Block => BinaryValue::Block(parse_block(value)?.1),
             Id::Void => BinaryValue::Void,
             _ => BinaryValue::Standard(value.into()),
         })
