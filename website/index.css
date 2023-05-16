@@ -1,0 +1,43 @@
+.main-area {
+  width: fit-content;
+  padding: 10px;
+  border: 1px solid #aaaaaa;
+}
+
+.hidden {
+  display: none;
+}
+
+ul,
+#tree-view {
+  list-style-type: none;
+}
+
+#tree-view {
+  margin: 0;
+  padding: 0;
+}
+
+.caret {
+  cursor: pointer;
+  user-select: text;
+}
+
+.caret::before {
+  content: "\25B6";
+  color: black;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.caret-down::before {
+  transform: rotate(90deg);
+}
+
+.nested {
+  display: none;
+}
+
+.active {
+  display: block;
+}

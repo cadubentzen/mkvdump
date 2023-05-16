@@ -1,0 +1,34 @@
+<html>
+  <head>
+    <title>mkvdump</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <h2><a href="./">mkvdump</a></h2>
+
+    <div
+      id="drop-zone"
+      class="main-area"
+      ondrop="dropHandler(event);"
+      ondragover="dragOverHandler(event);"
+    >
+      Drop your MKV or WebM file here
+      <br />
+      or
+      <br />
+      <input id="file-input" type="file" />
+    </div>
+
+    <div id="progress-zone" class="main-area hidden">
+      <div>Parsing Matroska file</div>
+      <progress id="progress-bar" value="0" max="100"></progress>
+    </div>
+
+    <div id="result-zone" class="main-area hidden">
+      <ul id="tree-view"></ul>
+    </div>
+
+    <script src="index.js"></script>
+  </body>
+</html>
