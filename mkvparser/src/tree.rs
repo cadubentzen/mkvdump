@@ -85,6 +85,8 @@ pub fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
 
 #[cfg(test)]
 mod tests {
+    use crate::Unsigned;
+
     use super::*;
 
     #[test]
@@ -96,19 +98,19 @@ mod tests {
             },
             Element {
                 header: Header::new(Id::EbmlVersion, 3, 1),
-                body: Body::Unsigned(1.into()),
+                body: Body::Unsigned(Unsigned::Standard(1)),
             },
             Element {
                 header: Header::new(Id::EbmlReadVersion, 3, 1),
-                body: Body::Unsigned(1.into()),
+                body: Body::Unsigned(Unsigned::Standard(1)),
             },
             Element {
                 header: Header::new(Id::EbmlMaxIdLength, 3, 1),
-                body: Body::Unsigned(4.into()),
+                body: Body::Unsigned(Unsigned::Standard(4)),
             },
             Element {
                 header: Header::new(Id::EbmlMaxSizeLength, 3, 1),
-                body: Body::Unsigned(8.into()),
+                body: Body::Unsigned(Unsigned::Standard(8)),
             },
             Element {
                 header: Header::new(Id::DocType, 3, 4),
@@ -116,11 +118,11 @@ mod tests {
             },
             Element {
                 header: Header::new(Id::DocTypeVersion, 3, 1),
-                body: Body::Unsigned(4.into()),
+                body: Body::Unsigned(Unsigned::Standard(4)),
             },
             Element {
                 header: Header::new(Id::DocTypeReadVersion, 3, 1),
-                body: Body::Unsigned(2.into()),
+                body: Body::Unsigned(Unsigned::Standard(2)),
             },
         ];
 
@@ -129,19 +131,19 @@ mod tests {
             children: vec![
                 ElementTree::Normal(Element {
                     header: Header::new(Id::EbmlVersion, 3, 1),
-                    body: Body::Unsigned(1.into()),
+                    body: Body::Unsigned(Unsigned::Standard(1)),
                 }),
                 ElementTree::Normal(Element {
                     header: Header::new(Id::EbmlReadVersion, 3, 1),
-                    body: Body::Unsigned(1.into()),
+                    body: Body::Unsigned(Unsigned::Standard(1)),
                 }),
                 ElementTree::Normal(Element {
                     header: Header::new(Id::EbmlMaxIdLength, 3, 1),
-                    body: Body::Unsigned(4.into()),
+                    body: Body::Unsigned(Unsigned::Standard(4)),
                 }),
                 ElementTree::Normal(Element {
                     header: Header::new(Id::EbmlMaxSizeLength, 3, 1),
-                    body: Body::Unsigned(8.into()),
+                    body: Body::Unsigned(Unsigned::Standard(8)),
                 }),
                 ElementTree::Normal(Element {
                     header: Header::new(Id::DocType, 3, 4),
@@ -149,11 +151,11 @@ mod tests {
                 }),
                 ElementTree::Normal(Element {
                     header: Header::new(Id::DocTypeVersion, 3, 1),
-                    body: Body::Unsigned(4.into()),
+                    body: Body::Unsigned(Unsigned::Standard(4)),
                 }),
                 ElementTree::Normal(Element {
                     header: Header::new(Id::DocTypeReadVersion, 3, 1),
-                    body: Body::Unsigned(2.into()),
+                    body: Body::Unsigned(Unsigned::Standard(2)),
                 }),
             ],
         })];

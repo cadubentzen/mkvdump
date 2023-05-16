@@ -111,8 +111,6 @@ macro_rules! ebml_enumerations {
         #[derive(Debug, PartialEq, Eq, Clone, Serialize)]
         #[serde(untagged)]
         pub enum Enumeration {
-            /// Uknown variant, which simply carries the value.
-            Unknown(u64),
             $(
                 $(#[doc = $enum_doc])*
                 $id($id),
@@ -121,19 +119,13 @@ macro_rules! ebml_enumerations {
 
         impl Enumeration {
             /// Create new enumeration
-            pub fn new(id: &Id, value: u64) -> Self {
+            pub fn new(id: &Id, value: u64) -> Option<Self> {
                 match id {
                     $(
-                        Id::$id => $id::new(value).map_or(Self::Unknown(value), Self::$id),
+                        Id::$id => $id::new(value).map(Self::$id),
                     )+
-                    _ => Self::Unknown(value)
+                    _ => None
                 }
-            }
-        }
-
-        impl From<u64> for Enumeration {
-            fn from(value: u64) -> Self {
-                Self::Unknown(value)
             }
         }
     };

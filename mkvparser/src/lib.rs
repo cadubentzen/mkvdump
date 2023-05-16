@@ -255,6 +255,22 @@ fn serialize_short_payloads<S: Serializer>(
     }
 }
 
+/// An unsigned value that may contain an enumeration
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(untagged)]
+pub enum Unsigned {
+    /// An standard value
+    Standard(u64),
+    /// An enumerated value
+    Enumeration(Enumeration),
+}
+
+impl Unsigned {
+    fn new(id: &Id, value: u64) -> Self {
+        Enumeration::new(id, value).map_or(Self::Standard(value), Self::Enumeration)
+    }
+}
+
 /// An [EBML Body](https://github.com/ietf-wg-cellar/ebml-specification/blob/master/specification.markdown#ebml-body)
 #[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(untagged)]
@@ -263,7 +279,7 @@ pub enum Body {
     /// that come after it.
     Master,
     /// An Unsigned Integer that may contain a known Enumeration
-    Unsigned(Enumeration),
+    Unsigned(Unsigned),
     /// A Signed Integer
     Signed(i64),
     /// A Float
@@ -338,7 +354,7 @@ pub fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
         Type::Master => (input, Body::Master),
         Type::Unsigned => {
             let (input, value) = parse_int(&header, input)?;
-            (input, Body::Unsigned(Enumeration::new(&header.id, value)))
+            (input, Body::Unsigned(Unsigned::new(&header.id, value)))
         }
         Type::Signed => {
             let (input, value) = parse_int(&header, input)?;
@@ -783,7 +799,9 @@ mod tests {
                 EMPTY,
                 Element {
                     header: Header::new(Id::TrackType, 2, 1),
-                    body: Body::Unsigned(Enumeration::TrackType(TrackType::Video))
+                    body: Body::Unsigned(Unsigned::Enumeration(Enumeration::TrackType(
+                        TrackType::Video
+                    )))
                 }
             ))
         );
@@ -796,7 +814,7 @@ mod tests {
                 EMPTY,
                 &Element {
                     header: Header::new(Id::TrackType, 2, 1),
-                    body: Body::Unsigned(Enumeration::Unknown(255))
+                    body: Body::Unsigned(Unsigned::Standard(255))
                 }
             )
         );
@@ -915,7 +933,7 @@ mod tests {
             "video"
         );
         assert_eq!(
-            serde_yaml::to_string(&Enumeration::Unknown(5u64))
+            serde_yaml::to_string(&Unsigned::Standard(5))
                 .unwrap()
                 .trim(),
             "5"
