@@ -3,6 +3,7 @@ const progressZone = document.querySelector("#progress-zone");
 const fileInput = document.querySelector("#file-input");
 const progress = document.querySelector("#progress-bar");
 const resultZone = document.querySelector("#result-zone");
+const copyJsonButton = document.querySelector("#copy-json-button");
 
 function dropHandler(ev) {
   ev.preventDefault();
@@ -39,6 +40,18 @@ function processFile(file) {
 function processResult(result) {
   progressZone.classList.add("hidden");
   resultZone.classList.remove("hidden");
+
+  copyJsonButton.addEventListener("click", async () => {
+    await navigator.clipboard.writeText(
+      JSON.stringify(
+        result,
+        // BigInt can't be serialized natively by JSON. So we turn those values
+        // into string.
+        (key, value) => (typeof value == "bigint" ? value.toString() : value),
+        2
+      )
+    );
+  });
 
   const treeView = document.querySelector("#tree-view");
 
