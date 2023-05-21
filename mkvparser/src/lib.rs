@@ -87,7 +87,8 @@ fn serialize_size<S: Serializer>(
 }
 
 impl Header {
-    fn new(id: Id, header_size: usize, body_size: usize) -> Self {
+    /// Create a new Header
+    pub fn new(id: Id, header_size: usize, body_size: usize) -> Self {
         Self {
             id,
             header_size,
