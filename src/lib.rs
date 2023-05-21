@@ -3,7 +3,7 @@
 use std::{fs::File, io::Read, path::Path};
 
 use anyhow::bail;
-use mkvparser::{find_valid_element, parse_element, Body, Element};
+use mkvparser::{elements::Id, find_valid_element, parse_element, Body, Element};
 
 fn insert_position(element: &mut Element, position: &mut Option<usize>) {
     element.header.position = *position;
@@ -39,9 +39,10 @@ pub fn parse_elements_from_file(
                 // we have nothing left to read or parse
                 break;
             } else if filled == buffer_size {
-                // We might arrive at this condition for two reasons:
-                // - next element does not fit in the buffer, so we continuously get NeedData
-                // - buffer is completely filled with corrupt data
+                // We might arrive at this condition if the next element does not fit
+                // in the buffer, so we continuously get NeedData.
+                // TODO(#59): we shouldn't need to get into this normally we only parse
+                // headers.
                 bail!("failed to parse the given file with buffer size of {buffer_size} bytes");
             }
         }
@@ -54,27 +55,20 @@ pub fn parse_elements_from_file(
                     elements.push(element);
                     parse_buffer = new_parse_buffer;
                 }
-                Err(e) => {
-                    match e {
-                        mkvparser::Error::NeedData => break,
-                        _ => {
-                            match find_valid_element(parse_buffer) {
-                                Ok((new_parse_buffer, mut corrupt_element)) => {
-                                    // TODO: merge consecutive corrupt elements
-                                    insert_position(&mut corrupt_element, &mut position);
-                                    elements.push(corrupt_element);
-                                    parse_buffer = new_parse_buffer;
-                                }
-                                Err(_) => {
-                                    // TODO: if we can't find a valid element, we could consume the
-                                    // whole buffer as a corrupt element. That way we wouldn't bail if
-                                    // the corrupt region is bigger than the buffer size.
-                                    break;
-                                }
-                            }
-                        }
+                Err(mkvparser::Error::NeedData) => break,
+                Err(_) => {
+                    // Attempt to find a valid element only if we have the full buffer
+                    // and are reading it from the start. If we can't find a valid element
+                    // in this case, then we'll bail.
+                    if parse_buffer.len() == filled + num_read {
+                        let (new_parse_buffer, mut corrupt_element) =
+                            find_valid_element(parse_buffer)?;
+                        insert_position(&mut corrupt_element, &mut position);
+                        push_corrupt_element(&mut elements, corrupt_element);
+                        parse_buffer = new_parse_buffer;
+                    } else {
+                        break;
                     }
-                    break;
                 }
             }
         }
@@ -83,4 +77,14 @@ pub fn parse_elements_from_file(
         buffer[..filled].copy_from_slice(&parse_buffer);
     }
     Ok(elements)
+}
+
+fn push_corrupt_element(elements: &mut Vec<Element>, corrupt_element: Element) {
+    match elements.last_mut() {
+        Some(last_element) if last_element.header.id == Id::corrupted() => {
+            *last_element.header.body_size.as_mut().unwrap() +=
+                corrupt_element.header.body_size.unwrap()
+        }
+        _ => elements.push(corrupt_element),
+    }
 }
