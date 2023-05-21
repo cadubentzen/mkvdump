@@ -352,42 +352,47 @@ pub fn find_valid_element(input: &[u8]) -> IResult<&[u8], Element> {
 /// Parse an element
 pub fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
     let (input, header) = parse_header(original_input)?;
-    let element_type = header.id.get_type();
-
-    let (input, body) = match element_type {
-        Type::Master => (input, Body::Master),
-        Type::Unsigned => {
-            let (input, value) = parse_int(&header, input)?;
-            (input, Body::Unsigned(Unsigned::new(&header.id, value)))
-        }
-        Type::Signed => {
-            let (input, value) = parse_int(&header, input)?;
-            (input, Body::Signed(value))
-        }
-        Type::Float => {
-            let (input, value) = parse_float(&header, input)?;
-            (input, Body::Float(value))
-        }
-        Type::String => {
-            let (input, value) = parse_string(&header, input)?;
-            (input, Body::String(value))
-        }
-        Type::Utf8 => {
-            let (input, value) = parse_string(&header, input)?;
-            (input, Body::Utf8(value))
-        }
-        Type::Date => {
-            let (input, value) = parse_date(&header, input)?;
-            (input, Body::Date(value))
-        }
-        Type::Binary => {
-            let (input, value) = parse_binary(&header, input)?;
-            (input, Body::Binary(BinaryValue::new(&header.id, value)?))
-        }
-    };
+    let (input, body) = parse_body(input, &header)?;
 
     let element = Element { header, body };
     Ok((input, element))
+}
+
+/// Parse element body
+pub fn parse_body<'a>(input: &'a [u8], header: &Header) -> IResult<&'a [u8], Body> {
+    let element_type = header.id.get_type();
+    let (input, body) = match element_type {
+        Type::Master => (input, Body::Master),
+        Type::Unsigned => {
+            let (input, value) = parse_int(header, input)?;
+            (input, Body::Unsigned(Unsigned::new(&header.id, value)))
+        }
+        Type::Signed => {
+            let (input, value) = parse_int(header, input)?;
+            (input, Body::Signed(value))
+        }
+        Type::Float => {
+            let (input, value) = parse_float(header, input)?;
+            (input, Body::Float(value))
+        }
+        Type::String => {
+            let (input, value) = parse_string(header, input)?;
+            (input, Body::String(value))
+        }
+        Type::Utf8 => {
+            let (input, value) = parse_string(header, input)?;
+            (input, Body::Utf8(value))
+        }
+        Type::Date => {
+            let (input, value) = parse_date(header, input)?;
+            (input, Body::Date(value))
+        }
+        Type::Binary => {
+            let (input, value) = parse_binary(header, input)?;
+            (input, Body::Binary(BinaryValue::new(&header.id, value)?))
+        }
+    };
+    Ok((input, body))
 }
 
 fn parse_string<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], String> {
