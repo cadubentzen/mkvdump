@@ -667,7 +667,7 @@ mod tests {
             (
                 SEGMENT_ID,
                 &Element {
-                    header: Header::new(Id::corrupted(), 4, 0),
+                    header: Header::new(Id::corrupted(), 0, 4),
                     body: Body::Binary(BinaryValue::Corrupted),
                 },
             )
