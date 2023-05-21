@@ -3,7 +3,7 @@
 use std::{fs::File, io::Read, path::Path};
 
 use anyhow::bail;
-use mkvparser::{elements::Id, find_valid_element, parse_element, Body, Element};
+use mkvparser::{elements::Id, find_valid_element, parse_element, Body, Element, Header};
 
 fn insert_position(element: &mut Element, position: &mut Option<usize>) {
     element.header.position = *position;
@@ -82,9 +82,51 @@ pub fn parse_elements_from_file(
 fn push_corrupt_element(elements: &mut Vec<Element>, corrupt_element: Element) {
     match elements.last_mut() {
         Some(last_element) if last_element.header.id == Id::corrupted() => {
-            *last_element.header.body_size.as_mut().unwrap() +=
-                corrupt_element.header.body_size.unwrap()
+            last_element.header = Header::new(
+                Id::corrupted(),
+                last_element.header.header_size + corrupt_element.header.header_size,
+                last_element.header.body_size.unwrap() + corrupt_element.header.body_size.unwrap(),
+            );
         }
         _ => elements.push(corrupt_element),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use mkvparser::BinaryValue;
+
+    use super::*;
+
+    #[test]
+    fn sequential_corrupt_elements() {
+        let mut elements = vec![];
+        let example_element = Element {
+            header: Header {
+                id: Id::corrupted(),
+                header_size: 0,
+                body_size: Some(4),
+                size: Some(4),
+                position: None,
+            },
+            body: Body::Binary(BinaryValue::Corrupted),
+        };
+        push_corrupt_element(&mut elements, example_element.clone());
+        push_corrupt_element(&mut elements, example_element);
+
+        assert_eq!(elements.len(), 1);
+        assert_eq!(
+            elements[0],
+            Element {
+                header: Header {
+                    id: Id::corrupted(),
+                    header_size: 0,
+                    body_size: Some(8),
+                    size: Some(8),
+                    position: None,
+                },
+                body: Body::Binary(BinaryValue::Corrupted),
+            }
+        )
     }
 }
