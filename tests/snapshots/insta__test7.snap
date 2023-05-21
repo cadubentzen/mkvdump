@@ -1,7 +1,6 @@
 ---
-source: src/main.rs
-assertion_line: 1006
-expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/test7.mkv\"))"
+source: tests/insta.rs
+expression: build_element_trees(&elements)
 ---
 - id: EBML
   header_size: 5
@@ -1305,7 +1304,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
             track_number: 87
             timestamp: 22913
         - id: Corrupted
-          header_size: 537128
+          header_size: 0
           size: 537128
           value: ~
     - id: Cluster

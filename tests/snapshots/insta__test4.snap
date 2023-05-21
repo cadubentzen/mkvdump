@@ -1,7 +1,6 @@
 ---
-source: src/main.rs
-assertion_line: 1003
-expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/test4.mkv\"))"
+source: tests/insta.rs
+expression: build_element_trees(&elements)
 ---
 - id: EBML
   header_size: 5
@@ -28,7 +27,7 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/matroska-test-suite/
   size: Unknown
   children:
     - id: Corrupted
-      header_size: 134
+      header_size: 0
       size: 134
       value: ~
     - id: Info

@@ -335,7 +335,7 @@ pub fn find_valid_element(input: &[u8]) -> IResult<&[u8], Element> {
                 return Ok((
                     &input[offset..],
                     Element {
-                        header: Header::new(Id::corrupted(), offset, 0),
+                        header: Header::new(Id::corrupted(), 0, offset),
                         body: Body::Binary(BinaryValue::Corrupted),
                     },
                 ));
