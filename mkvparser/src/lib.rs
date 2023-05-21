@@ -211,8 +211,7 @@ pub struct SimpleBlock {
 #[serde(untagged)]
 pub enum BinaryValue {
     /// A standard binary payload that will not be parsed further
-    #[serde(serialize_with = "serialize_short_payloads")]
-    Standard(Vec<u8>),
+    Standard(String),
     /// A SeekId payload
     SeekId(Id),
     /// A SimpleBlock
@@ -232,26 +231,31 @@ impl BinaryValue {
             Id::SimpleBlock => BinaryValue::SimpleBlock(parse_simple_block(value)?.1),
             Id::Block => BinaryValue::Block(parse_block(value)?.1),
             Id::Void => BinaryValue::Void,
-            _ => BinaryValue::Standard(value.into()),
+            _ => BinaryValue::Standard(value.as_hex()),
         })
     }
 }
 
-fn serialize_short_payloads<S: Serializer>(
-    payload: &[u8],
-    s: S,
-) -> std::result::Result<S::Ok, S::Error> {
+trait SerializeAsHexForShortInputs {
+    const MAX_LENGTH: usize;
+    fn as_hex(&self) -> String;
+}
+
+impl SerializeAsHexForShortInputs for [u8] {
     const MAX_LENGTH: usize = 64;
-    if payload.len() <= MAX_LENGTH {
-        let string_values = payload
-            .iter()
-            .map(|n| format!("{:02x}", n))
-            .fold("".to_owned(), |acc, s| acc + &s + " ")
-            .trim_end()
-            .to_owned();
-        s.serialize_str(&format!("[{}]", string_values))
-    } else {
-        s.serialize_str(&format!("{} bytes", payload.len()))
+
+    fn as_hex(&self) -> String {
+        if self.len() <= Self::MAX_LENGTH {
+            let string_values = self
+                .iter()
+                .map(|n| format!("{:02x}", n))
+                .fold("".to_owned(), |acc, s| acc + &s + " ")
+                .trim_end()
+                .to_owned();
+            format!("[{}]", string_values)
+        } else {
+            format!("{} bytes", self.len())
+        }
     }
 }
 
@@ -846,7 +850,7 @@ mod tests {
                 EMPTY,
                 Element {
                     header: Header::new(Id::Crc32, 2, 4),
-                    body: Body::Binary(BinaryValue::Standard(vec![0xAF, 0x93, 0x97, 0x18]))
+                    body: Body::Binary(BinaryValue::Standard([0xAF, 0x93, 0x97, 0x18].as_hex()))
                 }
             ))
         );
@@ -911,13 +915,13 @@ mod tests {
 
     #[test]
     fn test_binary_custom_serializer() {
-        let binary_value = BinaryValue::Standard(vec![1, 2, 3]);
+        let binary_value = [1, 2, 3].as_hex();
         assert_eq!(
             serde_yaml::to_string(&binary_value).unwrap().trim(),
             "'[01 02 03]'"
         );
 
-        let binary_value = BinaryValue::Standard(vec![0; 65]);
+        let binary_value = [0; 65].as_hex();
         assert_eq!(
             serde_yaml::to_string(&binary_value).unwrap().trim(),
             "65 bytes"
