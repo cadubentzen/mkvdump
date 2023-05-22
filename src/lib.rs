@@ -4,7 +4,7 @@ use std::{fs::File, io::Read, path::Path};
 
 use anyhow::bail;
 use mkvparser::{
-    elements::Id, find_valid_element, parse_body, parse_element, parse_header, Body, Element,
+    elements::Id, find_valid_element, parse_body, parse_header, Body, Element,
     Header,
 };
 
