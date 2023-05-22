@@ -151,7 +151,8 @@ fn parse_varint(first_input: &[u8]) -> IResult<&[u8], Option<usize>> {
     Ok((input, result))
 }
 
-fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
+/// Parse element header header
+pub fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
     let initial_len = input.len();
     let (input, id) = parse_id(input)?;
     let (input, body_size) = parse_varint(input)?;

@@ -3,6 +3,7 @@ macro_rules! ebml_elements {
         use serde::{Serialize, Serializer};
 
         /// Matroska Element Type.
+        #[derive(Debug, PartialEq)]
         pub enum Type {
             /// Unsigned
             Unsigned,
