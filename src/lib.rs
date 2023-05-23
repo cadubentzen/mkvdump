@@ -94,7 +94,7 @@ fn push_corrupt_element(elements: &mut Vec<Element>, corrupt_element: Element) {
 
 #[cfg(test)]
 mod tests {
-    use mkvparser::BinaryValue;
+    use mkvparser::Binary;
 
     use super::*;
 
@@ -109,7 +109,7 @@ mod tests {
                 size: Some(4),
                 position: None,
             },
-            body: Body::Binary(BinaryValue::Corrupted),
+            body: Body::Binary(Binary::Corrupted),
         };
         push_corrupt_element(&mut elements, example_element.clone());
         push_corrupt_element(&mut elements, example_element);
@@ -125,7 +125,7 @@ mod tests {
                     size: Some(8),
                     position: None,
                 },
-                body: Body::Binary(BinaryValue::Corrupted),
+                body: Body::Binary(Binary::Corrupted),
             }
         )
     }

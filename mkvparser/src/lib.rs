@@ -210,7 +210,7 @@ pub struct SimpleBlock {
 /// Enumeration with possible binary value payloads
 #[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(untagged)]
-pub enum BinaryValue {
+pub enum Binary {
     /// A standard binary payload that will not be parsed further
     Standard(String),
     /// A SeekId payload
@@ -225,14 +225,14 @@ pub enum BinaryValue {
     Corrupted,
 }
 
-impl BinaryValue {
+impl Binary {
     fn new(id: &Id, value: &[u8]) -> Result<Self> {
         Ok(match id {
-            Id::SeekId => BinaryValue::SeekId(parse_id(value)?.1),
-            Id::SimpleBlock => BinaryValue::SimpleBlock(parse_simple_block(value)?.1),
-            Id::Block => BinaryValue::Block(parse_block(value)?.1),
-            Id::Void => BinaryValue::Void,
-            _ => BinaryValue::Standard(value.as_hex()),
+            Id::SeekId => Binary::SeekId(parse_id(value)?.1),
+            Id::SimpleBlock => Binary::SimpleBlock(parse_simple_block(value)?.1),
+            Id::Block => Binary::Block(parse_block(value)?.1),
+            Id::Void => Binary::Void,
+            _ => Binary::Standard(value.as_hex()),
         })
     }
 }
@@ -296,7 +296,7 @@ pub enum Body {
     /// A Date
     Date(DateTime<Utc>),
     /// A Binary
-    Binary(BinaryValue),
+    Binary(Binary),
 }
 
 /// Represents an EBML Element
@@ -341,7 +341,7 @@ pub fn find_valid_element(input: &[u8]) -> IResult<&[u8], Element> {
                     &input[offset..],
                     Element {
                         header: Header::new(Id::corrupted(), 0, offset),
-                        body: Body::Binary(BinaryValue::Corrupted),
+                        body: Body::Binary(Binary::Corrupted),
                     },
                 ));
             }
@@ -390,7 +390,7 @@ pub fn parse_body<'a>(input: &'a [u8], header: &Header) -> IResult<&'a [u8], Bod
         }
         Type::Binary => {
             let (input, value) = parse_binary(header, input)?;
-            (input, Body::Binary(BinaryValue::new(&header.id, value)?))
+            (input, Body::Binary(Binary::new(&header.id, value)?))
         }
     };
     Ok((input, body))
@@ -669,7 +669,7 @@ mod tests {
                 SEGMENT_ID,
                 &Element {
                     header: Header::new(Id::corrupted(), 0, 4),
-                    body: Body::Binary(BinaryValue::Corrupted),
+                    body: Body::Binary(Binary::Corrupted),
                 },
             )
         );
@@ -842,7 +842,7 @@ mod tests {
                 EMPTY,
                 Element {
                     header: Header::new(Id::SeekId, 3, 4),
-                    body: Body::Binary(BinaryValue::SeekId(Id::Info))
+                    body: Body::Binary(Binary::SeekId(Id::Info))
                 }
             ))
         );
@@ -856,7 +856,7 @@ mod tests {
                 EMPTY,
                 Element {
                     header: Header::new(Id::Crc32, 2, 4),
-                    body: Body::Binary(BinaryValue::Standard([0xAF, 0x93, 0x97, 0x18].as_hex()))
+                    body: Body::Binary(Binary::Standard([0xAF, 0x93, 0x97, 0x18].as_hex()))
                 }
             ))
         );
