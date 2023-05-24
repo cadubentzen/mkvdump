@@ -58,18 +58,21 @@ fn parse_short(input: &[u8]) -> IResult<&[u8], ShortParsed> {
     }
 }
 
-fn parse_short_corrupt<'a>(input: &'a [u8], is_corrupt: &mut bool) -> (&'a [u8], ShortParsed) {
-    let (input, corrupt_element) = parse_corrupt(input);
+fn parse_short_corrupt<'a>(
+    input: &'a [u8],
+    is_corrupt: &mut bool,
+) -> IResult<&'a [u8], ShortParsed> {
+    let (input, corrupt_element) = parse_corrupt(input)?;
     if !input.is_empty() {
         *is_corrupt = false;
     }
-    (
+    Ok((
         input,
         ShortParsed {
             element: corrupt_element,
             bytes_to_be_skipped: 0,
         },
-    )
+    ))
 }
 
 fn parse_short_or_corrupt<'a>(
@@ -77,11 +80,7 @@ fn parse_short_or_corrupt<'a>(
     is_corrupt: &mut bool,
 ) -> IResult<&'a [u8], ShortParsed> {
     let parsed_short = if *is_corrupt {
-        if input.is_empty() {
-            Err(Error::NeedData)
-        } else {
-            Ok(parse_short_corrupt(input, is_corrupt))
-        }
+        parse_short_corrupt(input, is_corrupt)
     } else {
         parse_short(input)
     };
@@ -91,7 +90,7 @@ fn parse_short_or_corrupt<'a>(
         Err(Error::NeedData) => Err(Error::NeedData),
         Err(_) => {
             *is_corrupt = true;
-            Ok(parse_short_corrupt(input, is_corrupt))
+            parse_short_corrupt(input, is_corrupt)
         }
     }
 }

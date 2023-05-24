@@ -340,8 +340,13 @@ const SYNC_ELEMENT_IDS: &[Id] = &[
 /// for resynchronizing to major structures in the event of data corruption or loss."
 ///
 /// This parser either stops once a valid sync id or consumes the whole buffer.
-pub fn parse_corrupt(input: &[u8]) -> (&[u8], Element) {
+pub fn parse_corrupt(input: &[u8]) -> IResult<&[u8], Element> {
     const SYNC_ID_LEN: usize = 4;
+
+    if input.is_empty() {
+        return Err(Error::NeedData);
+    }
+
     for (offset, window) in input.windows(SYNC_ID_LEN).enumerate() {
         for sync_id in SYNC_ELEMENT_IDS {
             let id_value = sync_id.get_value().unwrap();
@@ -350,23 +355,23 @@ pub fn parse_corrupt(input: &[u8]) -> (&[u8], Element) {
                 // TODO: we might want to try and parse the element here, because if the
                 // the sync element header itself is corrupt (e.g. invalid varint), then
                 // the consuming side might hang.
-                return (
+                return Ok((
                     &input[offset..],
                     Element {
                         header: Header::new(Id::corrupted(), 0, offset),
                         body: Body::Binary(Binary::Corrupted),
                     },
-                );
+                ));
             }
         }
     }
-    (
+    Ok((
         &[],
         Element {
             header: Header::new(Id::corrupted(), 0, input.len()),
             body: Body::Binary(Binary::Corrupted),
         },
-    )
+    ))
 }
 
 /// Parse an element
@@ -579,7 +584,7 @@ fn parse_simple_block(input: &[u8]) -> IResult<&[u8], SimpleBlock> {
 
 /// Helper to add resiliency to corrupt inputs
 pub fn parse_element_or_corrupted(input: &[u8]) -> IResult<&[u8], Element> {
-    parse_element(input).or_else(|_| Ok(parse_corrupt(input)))
+    parse_element(input).or_else(|_| parse_corrupt(input))
 }
 
 #[cfg(test)]
@@ -808,8 +813,6 @@ mod tests {
                 }
             ))
         );
-
-        println!("{}", serde_yaml::to_string(&(result.unwrap().1)).unwrap());
     }
 
     #[test]
@@ -962,13 +965,13 @@ mod tests {
         // can not find in a bonkers array, so should consume it all
         assert_eq!(
             parse_corrupt(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-            (
+            Ok((
                 EMPTY,
                 Element {
                     header: Header::new(Id::corrupted(), 0, 10),
                     body: Body::Binary(Binary::Corrupted)
                 }
-            )
+            ))
         );
     }
 }
