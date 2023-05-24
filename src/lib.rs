@@ -1,28 +1,79 @@
 #![doc = include_str!("../README.md")]
 
-use std::{fs::File, io::Read, path::Path};
+use std::{
+    fs::File,
+    io::{Read, Seek},
+    path::Path,
+};
 
 use anyhow::bail;
 use mkvparser::{
-    elements::Id, find_valid_element, parse_body, parse_header, Body, Element,
-    Header,
+    elements::{Id, Type},
+    parse_body, parse_corrupt, parse_header, peek_binary, Body, Element, Error, Header,
 };
 
-fn insert_position(
-    element: &mut Element,
-    current_header: &Option<Header>,
-    position: &mut Option<usize>,
-) {
+fn insert_position(element: &mut Element, position: &mut Option<usize>) {
     element.header.position = *position;
     *position = position.map(|p| {
-        let v = if let Body::Master = element.body {
+        if let Body::Master = element.body {
             p + element.header.header_size
         } else {
             // It's safe to unwrap because all non-Master elements have a set size
             p + element.header.size.unwrap()
-        };
-        v + current_header.as_ref().map_or(0, |h| h.header_size)
+        }
     });
+}
+
+type IResult<T, O> = mkvparser::Result<(T, O)>;
+
+struct ShortParsed {
+    element: Element,
+    bytes_to_be_skipped: usize,
+}
+
+fn parse_short(input: &[u8]) -> IResult<&[u8], ShortParsed> {
+    let (input, header) = parse_header(input)?;
+    if header.id.get_type() != Type::Binary {
+        let (input, body) = parse_body(&header, input)?;
+        Ok((
+            input,
+            ShortParsed {
+                element: Element { header, body },
+                bytes_to_be_skipped: 0,
+            },
+        ))
+    } else {
+        let (input, binary) = peek_binary(&header, input)?;
+        let body_size = header.body_size.ok_or(Error::ForbiddenUnknownSize)?;
+        Ok((
+            input,
+            ShortParsed {
+                element: Element {
+                    header,
+                    body: Body::Binary(binary),
+                },
+                bytes_to_be_skipped: body_size,
+            },
+        ))
+    }
+}
+
+fn parse_short_or_corrupt(input: &[u8]) -> IResult<&[u8], ShortParsed> {
+    let parsed_short = parse_short(input);
+    match parsed_short {
+        Ok((input, short_parsed)) => Ok((input, short_parsed)),
+        Err(Error::NeedData) => Err(Error::NeedData),
+        Err(_) => {
+            let (input, corrupt_element) = parse_corrupt(input);
+            Ok((
+                input,
+                ShortParsed {
+                    element: corrupt_element,
+                    bytes_to_be_skipped: 0,
+                },
+            ))
+        }
+    }
 }
 
 #[doc(hidden)]
@@ -39,8 +90,6 @@ pub fn parse_elements_from_file(
     let mut filled = 0;
     let mut elements = Vec::<Element>::new();
     let mut position = show_positions.then_some(0);
-
-    let mut current_header = None;
 
     loop {
         let num_read = file.read(&mut buffer[filled..])?;
@@ -60,58 +109,32 @@ pub fn parse_elements_from_file(
         let mut parse_buffer = &buffer[..(filled + num_read)];
 
         loop {
-            if current_header.is_none() {
-                match parse_header(parse_buffer) {
-                    Ok((new_parse_buffer, header)) => {
-                        current_header = Some(header);
-                        parse_buffer = new_parse_buffer;
-                    }
-                    Err(mkvparser::Error::NeedData) => break,
-                    Err(_) => {
-                        // Attempt to find a valid element only if we have the full buffer
-                        // and are reading it from the start. If we can't find a valid element
-                        // in this case, then we'll bail.
-                        if parse_buffer.len() == filled + num_read {
-                            let (new_parse_buffer, corrupt_element) =
-                                find_valid_element(parse_buffer)?;
-                            push_corrupt_element(&mut elements, None, corrupt_element);
-                            parse_buffer = new_parse_buffer;
-                        } else {
-                            break;
-                        }
-                    }
-                }
-            } else {
-                match parse_body(parse_buffer, current_header.as_ref().unwrap()) {
-                    Ok((new_parse_buffer, body)) => {
-                        let mut element = Element {
-                            header: current_header.take().unwrap(),
-                            body,
-                        };
-                        insert_position(&mut element, &None, &mut position);
+            match parse_short_or_corrupt(parse_buffer) {
+                Ok((
+                    new_parse_buffer,
+                    ShortParsed {
+                        mut element,
+                        bytes_to_be_skipped,
+                    },
+                )) => {
+                    insert_position(&mut element, &mut position);
+
+                    if element.header.id == Id::corrupted() {
+                        push_corrupt_element(&mut elements, element);
+                    } else {
                         elements.push(element);
-                        parse_buffer = new_parse_buffer;
                     }
-                    Err(mkvparser::Error::NeedData) => break,
-                    Err(_) => {
-                        // Attempt to find a valid element only if we have the full buffer
-                        // and are reading it from the start. If we can't find a valid element
-                        // in this case, then we'll bail.
-                        if parse_buffer.len() == filled + num_read {
-                            let (new_parse_buffer, mut corrupt_element) =
-                                find_valid_element(parse_buffer)?;
-                            insert_position(&mut corrupt_element, &current_header, &mut position);
-                            push_corrupt_element(
-                                &mut elements,
-                                current_header.take(),
-                                corrupt_element,
-                            );
-                            parse_buffer = new_parse_buffer;
-                        } else {
-                            break;
-                        }
+
+                    if new_parse_buffer.len() >= bytes_to_be_skipped {
+                        parse_buffer = &new_parse_buffer[bytes_to_be_skipped..];
+                    } else {
+                        file.seek(std::io::SeekFrom::Current(
+                            (bytes_to_be_skipped - new_parse_buffer.len()) as i64,
+                        ))?;
+                        parse_buffer = &[];
                     }
                 }
+                Err(_) => break,
             }
         }
         filled = parse_buffer.len();
@@ -121,26 +144,16 @@ pub fn parse_elements_from_file(
     Ok(elements)
 }
 
-fn push_corrupt_element(
-    elements: &mut Vec<Element>,
-    current_header: Option<Header>,
-    mut corrupt_element: Element,
-) {
+fn push_corrupt_element(elements: &mut Vec<Element>, corrupt_element: Element) {
     match elements.last_mut() {
         Some(last_element) if last_element.header.id == Id::corrupted() => {
             last_element.header = Header::new(
                 Id::corrupted(),
                 last_element.header.header_size + corrupt_element.header.header_size,
-                last_element.header.body_size.unwrap()
-                    + corrupt_element.header.body_size.unwrap()
-                    + current_header.map_or(0, |c| c.header_size),
+                last_element.header.body_size.unwrap() + corrupt_element.header.body_size.unwrap(),
             );
         }
-        _ => {
-            *corrupt_element.header.size.as_mut().unwrap() +=
-                current_header.map_or(0, |c| c.header_size);
-            elements.push(corrupt_element)
-        }
+        _ => elements.push(corrupt_element),
     }
 }
 
@@ -163,8 +176,8 @@ mod tests {
             },
             body: Body::Binary(Binary::Corrupted),
         };
-        push_corrupt_element(&mut elements, None, example_element.clone());
-        push_corrupt_element(&mut elements, None, example_element);
+        push_corrupt_element(&mut elements, example_element.clone());
+        push_corrupt_element(&mut elements, example_element);
 
         assert_eq!(elements.len(), 1);
         assert_eq!(

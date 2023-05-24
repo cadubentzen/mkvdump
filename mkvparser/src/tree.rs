@@ -39,6 +39,7 @@ pub fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
         let element = &elements[index];
         match element.body {
             Body::Master => {
+                println!("master: {element:?}");
                 // parse_header() already handles Unknown sizes.
                 let mut size_remaining = element.header.body_size.unwrap_or(usize::MAX);
 
@@ -51,6 +52,8 @@ pub fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
                             index -= 1;
                             break;
                         }
+
+                        println!("child: {next_child:?}");
 
                         size_remaining -= if let Body::Master = next_child.body {
                             // Master elements' body size should not count in the recursion
@@ -75,6 +78,7 @@ pub fn build_element_trees(elements: &[Element]) -> Vec<ElementTree> {
                 }));
             }
             _ => {
+                println!("normal: {element:?}");
                 trees.push(ElementTree::Normal(element.clone()));
             }
         }

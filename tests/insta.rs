@@ -1,7 +1,7 @@
 use mkvdump::parse_elements_from_file;
 use mkvparser::tree::build_element_trees;
 
-const BUFFER_SIZE: u64 = 64 * 1024 * 1024;
+const BUFFER_SIZE: u64 = 8192;
 
 macro_rules! snapshot_test {
     ($test_name:ident, $filename:expr) => {

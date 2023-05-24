@@ -226,38 +226,45 @@ pub enum Binary {
     Corrupted,
 }
 
-impl Binary {
-    fn new(id: &Id, value: &[u8]) -> Result<Self> {
-        Ok(match id {
-            Id::SeekId => Binary::SeekId(parse_id(value)?.1),
-            Id::SimpleBlock => Binary::SimpleBlock(parse_simple_block(value)?.1),
-            Id::Block => Binary::Block(parse_block(value)?.1),
-            Id::Void => Binary::Void,
-            _ => Binary::Standard(value.as_hex()),
-        })
-    }
+fn parse_binary<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Binary> {
+    let body_size = header.body_size.ok_or(Error::ForbiddenUnknownSize)?;
+    let (input, binary) = peek_binary(header, input)?;
+    // Actually consume the bytes from the body
+    let (input, _) = take(body_size)(input)?;
+    Ok((input, binary))
 }
 
-trait SerializeAsHexForShortInputs {
-    const MAX_LENGTH: usize;
-    fn as_hex(&self) -> String;
+/// Peek into Binary body without advancing the buffer.
+///
+/// It may be useful to parse just the bytes of the binary body
+/// without requiring the whole binary to be loaded into memory.
+pub fn peek_binary<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Binary> {
+    let body_size = header.body_size.ok_or(Error::ForbiddenUnknownSize)?;
+
+    let binary = match header.id {
+        Id::SeekId => Binary::SeekId(parse_id(input)?.1),
+        Id::SimpleBlock => Binary::SimpleBlock(parse_simple_block(input)?.1),
+        Id::Block => Binary::Block(parse_block(input)?.1),
+        Id::Void => Binary::Void,
+        _ => Binary::Standard(peek_standard_binary(input, body_size)?.1),
+    };
+
+    Ok((input, binary))
 }
 
-impl SerializeAsHexForShortInputs for [u8] {
+fn peek_standard_binary(input: &[u8], size: usize) -> IResult<&[u8], String> {
     const MAX_LENGTH: usize = 64;
-
-    fn as_hex(&self) -> String {
-        if self.len() <= Self::MAX_LENGTH {
-            let string_values = self
-                .iter()
-                .map(|n| format!("{:02x}", n))
-                .fold("".to_owned(), |acc, s| acc + &s + " ")
-                .trim_end()
-                .to_owned();
-            format!("[{}]", string_values)
-        } else {
-            format!("{} bytes", self.len())
-        }
+    if size <= MAX_LENGTH {
+        let (input, bytes) = peek(take(size))(input)?;
+        let string_values = bytes
+            .iter()
+            .map(|n| format!("{:02x}", n))
+            .fold("".to_owned(), |acc, s| acc + &s + " ")
+            .trim_end()
+            .to_owned();
+        Ok((input, format!("[{}]", string_values)))
+    } else {
+        Ok((input, format!("{} bytes", size)))
     }
 }
 
@@ -324,44 +331,55 @@ const SYNC_ELEMENT_IDS: &[Id] = &[
     Id::Tags,
 ];
 
-/// Find a valid element to restart parsing from.
+/// Parse corrupt area
 ///
 /// If we ever hit a damaged element, we can try to recover by finding
 /// one of those IDs next to start clean. Those are the 4-bytes IDs,
 /// which according to the EBML spec:
 /// "Four-octet Element IDs are somewhat special in that they are useful
 /// for resynchronizing to major structures in the event of data corruption or loss."
-pub fn find_valid_element(input: &[u8]) -> IResult<&[u8], Element> {
+///
+/// This parser either stops once a valid sync id or consumes the whole buffer.
+pub fn parse_corrupt(input: &[u8]) -> (&[u8], Element) {
     const SYNC_ID_LEN: usize = 4;
     for (offset, window) in input.windows(SYNC_ID_LEN).enumerate() {
         for sync_id in SYNC_ELEMENT_IDS {
             let id_value = sync_id.get_value().unwrap();
             let id_bytes = id_value.to_be_bytes();
             if window == id_bytes {
-                return Ok((
+                // TODO: we might want to try and parse the element here, because if the
+                // the sync element header itself is corrupt (e.g. invalid varint), then
+                // the consuming side might hang.
+                return (
                     &input[offset..],
                     Element {
                         header: Header::new(Id::corrupted(), 0, offset),
                         body: Body::Binary(Binary::Corrupted),
                     },
-                ));
+                );
             }
         }
     }
-    Err(Error::ValidElementNotFound)
+    (
+        &[],
+        Element {
+            header: Header::new(Id::corrupted(), 0, input.len()),
+            body: Body::Binary(Binary::Corrupted),
+        },
+    )
 }
 
 /// Parse an element
 pub fn parse_element(original_input: &[u8]) -> IResult<&[u8], Element> {
     let (input, header) = parse_header(original_input)?;
-    let (input, body) = parse_body(input, &header)?;
+    let (input, body) = parse_body(&header, input)?;
 
     let element = Element { header, body };
     Ok((input, element))
 }
 
 /// Parse element body
-pub fn parse_body<'a>(input: &'a [u8], header: &Header) -> IResult<&'a [u8], Body> {
+pub fn parse_body<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Body> {
     let element_type = header.id.get_type();
     let (input, body) = match element_type {
         Type::Master => (input, Body::Master),
@@ -391,7 +409,7 @@ pub fn parse_body<'a>(input: &'a [u8], header: &Header) -> IResult<&'a [u8], Bod
         }
         Type::Binary => {
             let (input, value) = parse_binary(header, input)?;
-            (input, Body::Binary(Binary::new(&header.id, value)?))
+            (input, Body::Binary(value))
         }
     };
     Ok((input, body))
@@ -406,12 +424,6 @@ fn parse_string<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Strin
     let value = value.trim_end_matches('\0').to_string();
 
     Ok((input, value))
-}
-
-fn parse_binary<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], &'a [u8]> {
-    let body_size = header.body_size.ok_or(Error::ForbiddenUnknownSize)?;
-
-    Ok(take(body_size)(input)?)
 }
 
 fn parse_date<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], DateTime<Utc>> {
@@ -566,8 +578,8 @@ fn parse_simple_block(input: &[u8]) -> IResult<&[u8], SimpleBlock> {
 }
 
 /// Helper to add resiliency to corrupt inputs
-pub fn parse_element_or_skip_corrupted(input: &[u8]) -> IResult<&[u8], Element> {
-    parse_element(input).or_else(|_| find_valid_element(input))
+pub fn parse_element_or_corrupted(input: &[u8]) -> IResult<&[u8], Element> {
+    parse_element(input).or_else(|_| Ok(parse_corrupt(input)))
 }
 
 #[cfg(test)]
@@ -662,8 +674,7 @@ mod tests {
         // Now it finds a Segment.
         const SEGMENT_ID: &[u8] = &[0x18, 0x53, 0x80, 0x67];
         let (remaining, element) =
-            parse_element_or_skip_corrupted(&[0x42, 0x87, 0x90, 0x01, 0x18, 0x53, 0x80, 0x67])
-                .unwrap();
+            parse_element_or_corrupted(&[0x42, 0x87, 0x90, 0x01, 0x18, 0x53, 0x80, 0x67]).unwrap();
         assert_eq!(
             (remaining, &element),
             (
@@ -752,7 +763,7 @@ mod tests {
         const BODY: &[u8] = &[0x15, 0x49, 0xA9, 0x66];
         assert_eq!(
             parse_binary(&Header::new(Id::SeekId, 3, 4), BODY),
-            Ok((EMPTY, BODY))
+            Ok((EMPTY, Binary::SeekId(Id::Info)))
         );
         assert_eq!(
             parse_binary(&Header::with_unknown_size(Id::SeekId, 3), EMPTY),
@@ -857,7 +868,7 @@ mod tests {
                 EMPTY,
                 Element {
                     header: Header::new(Id::Crc32, 2, 4),
-                    body: Body::Binary(Binary::Standard([0xAF, 0x93, 0x97, 0x18].as_hex()))
+                    body: Body::Binary(Binary::Standard("[af 93 97 18]".into()))
                 }
             ))
         );
@@ -921,18 +932,13 @@ mod tests {
     }
 
     #[test]
-    fn test_binary_custom_serializer() {
-        let binary_value = [1, 2, 3].as_hex();
-        assert_eq!(
-            serde_yaml::to_string(&binary_value).unwrap().trim(),
-            "'[01 02 03]'"
-        );
+    fn test_peek_standard_binary() -> Result<()> {
+        let input = &[1, 2, 3];
+        assert_eq!(peek_standard_binary(input, 3)?.1, "[01 02 03]");
 
-        let binary_value = [0; 65].as_hex();
-        assert_eq!(
-            serde_yaml::to_string(&binary_value).unwrap().trim(),
-            "65 bytes"
-        );
+        let input = &[0; 5];
+        assert_eq!(peek_standard_binary(input, 65)?.1, "65 bytes");
+        Ok(())
     }
 
     #[test]
@@ -952,13 +958,17 @@ mod tests {
     }
 
     #[test]
-    fn test_find_valid_element() {
-        // impossible to find in an empty array
-        assert_eq!(find_valid_element(&[]), Err(Error::ValidElementNotFound));
-        // can not find in a bonkers array
+    fn test_parse_corrupt() {
+        // can not find in a bonkers array, so should consume it all
         assert_eq!(
-            find_valid_element(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-            Err(Error::ValidElementNotFound)
+            parse_corrupt(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+            (
+                EMPTY,
+                Element {
+                    header: Header::new(Id::corrupted(), 0, 10),
+                    body: Body::Binary(Binary::Corrupted)
+                }
+            )
         );
     }
 }
