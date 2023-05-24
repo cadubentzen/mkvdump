@@ -151,7 +151,7 @@ fn parse_varint(first_input: &[u8]) -> IResult<&[u8], Option<usize>> {
     Ok((input, result))
 }
 
-/// Parse element header header
+/// Parse element header
 pub fn parse_header(input: &[u8]) -> IResult<&[u8], Header> {
     let initial_len = input.len();
     let (input, id) = parse_id(input)?;
@@ -236,7 +236,7 @@ fn parse_binary<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Binar
 
 /// Peek into Binary body without advancing the buffer.
 ///
-/// It may be useful to parse just the bytes of the binary body
+/// It may be useful to parse just the first bytes of the binary body
 /// without requiring the whole binary to be loaded into memory.
 pub fn peek_binary<'a>(header: &Header, input: &'a [u8]) -> IResult<&'a [u8], Binary> {
     let body_size = header.body_size.ok_or(Error::ForbiddenUnknownSize)?;
@@ -340,6 +340,7 @@ const SYNC_ELEMENT_IDS: &[Id] = &[
 /// for resynchronizing to major structures in the event of data corruption or loss."
 ///
 /// This parser either stops once a valid sync id or consumes the whole buffer.
+/// It returns NeedData if the input is an empty slice.
 pub fn parse_corrupt(input: &[u8]) -> IResult<&[u8], Element> {
     const SYNC_ID_LEN: usize = 4;
 
@@ -354,7 +355,7 @@ pub fn parse_corrupt(input: &[u8]) -> IResult<&[u8], Element> {
             if window == id_bytes {
                 // TODO: we might want to try and parse the element here, because if the
                 // the sync element header itself is corrupt (e.g. invalid varint), then
-                // the consuming side might hang.
+                // the consuming side might step into an infinite loop.
                 return Ok((
                     &input[offset..],
                     Element {
@@ -962,7 +963,8 @@ mod tests {
 
     #[test]
     fn test_parse_corrupt() {
-        // can not find in a bonkers array, so should consume it all
+        // can not find a valid sync id in  a bonkers array, so it should consume the
+        // entire buffer
         assert_eq!(
             parse_corrupt(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
             Ok((

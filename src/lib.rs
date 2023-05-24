@@ -31,13 +31,13 @@ struct ShortParsed {
 }
 
 // For all element types except Binary, we can just parse the body, consuming all
-// bytes in it. However for binary bodies can be rather large but:
-// - we are not going to display the full payload in the dump anyways
-// - we don't want to load this large buffer in memory
+// bytes in it. Binary bodies can be rather large, but:
+// - we are not going to display their full payload in the dump anyways
+// - we don't want to load those large buffers in memory
 // so we just peek the first bytes in the beginning for some binary sub-types,
 // summarize the payload or serialize short ones.
-// For the binary bodies, since we're only peeking the buffer and not consuming it
-// we return to the caller about how many bytes should be skipped.
+// For the binary bodies, since we're only peeking the buffer and not consuming it,
+// we return to the caller how many bytes should be skipped.
 fn parse_short(input: &[u8]) -> IResult<&[u8], ShortParsed> {
     let (input, header) = parse_header(input)?;
     if header.id.get_type() != Type::Binary {
@@ -71,7 +71,7 @@ fn parse_short_corrupt<'a>(
 ) -> IResult<&'a [u8], ShortParsed> {
     let (input, corrupt_element) = parse_corrupt(input)?;
     // If we fully consume the buffer as a corrupt region, we are still in
-    // a "corrupt state", so the caller should instead directly parse the
+    // a "corrupt state", so the caller should directly parse a
     // corrupt region again until some valid element is found instead of
     // attempting to parse an element (it could happen that parsing from
     // the wrong start byte yields valid elements and the parser never
@@ -130,7 +130,7 @@ pub fn parse_elements_from_file(
 
         if num_read == 0 {
             // If some bytes are still to be parsed but nothing was read,
-            // append a final corrupt element to signal as such.
+            // append a final corrupt element.
             if !parse_buffer.is_empty() {
                 push_corrupt_element(
                     &mut elements,
