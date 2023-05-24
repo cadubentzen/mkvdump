@@ -6,10 +6,9 @@ use std::{
     path::Path,
 };
 
-use anyhow::bail;
 use mkvparser::{
     elements::{Id, Type},
-    parse_body, parse_corrupt, parse_header, peek_binary, Body, Element, Error, Header,
+    parse_body, parse_corrupt, parse_header, peek_binary, Binary, Body, Element, Error, Header,
 };
 
 fn insert_position(element: &mut Element, position: &mut Option<usize>) {
@@ -31,6 +30,14 @@ struct ShortParsed {
     bytes_to_be_skipped: usize,
 }
 
+// For all element types except Binary, we can just parse the body, consuming all
+// bytes in it. However for binary bodies can be rather large but:
+// - we are not going to display the full payload in the dump anyways
+// - we don't want to load this large buffer in memory
+// so we just peek the first bytes in the beginning for some binary sub-types,
+// summarize the payload or serialize short ones.
+// For the binary bodies, since we're only peeking the buffer and not consuming it
+// we return to the caller about how many bytes should be skipped.
 fn parse_short(input: &[u8]) -> IResult<&[u8], ShortParsed> {
     let (input, header) = parse_header(input)?;
     if header.id.get_type() != Type::Binary {
@@ -63,6 +70,12 @@ fn parse_short_corrupt<'a>(
     is_corrupt: &mut bool,
 ) -> IResult<&'a [u8], ShortParsed> {
     let (input, corrupt_element) = parse_corrupt(input)?;
+    // If we fully consume the buffer as a corrupt region, we are still in
+    // a "corrupt state", so the caller should instead directly parse the
+    // corrupt region again until some valid element is found instead of
+    // attempting to parse an element (it could happen that parsing from
+    // the wrong start byte yields valid elements and the parser never
+    // returns to a valid state again).
     if !input.is_empty() {
         *is_corrupt = false;
     }
@@ -113,20 +126,24 @@ pub fn parse_elements_from_file(
 
     loop {
         let num_read = file.read(&mut buffer[filled..])?;
-        if num_read == 0 {
-            if filled == 0 {
-                // we have nothing left to read or parse
-                break;
-            } else if filled == buffer_size {
-                // We might arrive at this condition if the next element does not fit
-                // in the buffer, so we continuously get NeedData.
-                // TODO(#59): we shouldn't need to get into this normally we only parse
-                // headers.
-                bail!("failed to parse the given file with buffer size of {buffer_size} bytes");
-            }
-        }
-
         let mut parse_buffer = &buffer[..(filled + num_read)];
+
+        if num_read == 0 {
+            // If some bytes are still to be parsed but nothing was read,
+            // append a final corrupt element to signal as such.
+            if !parse_buffer.is_empty() {
+                push_corrupt_element(
+                    &mut elements,
+                    Element {
+                        header: Header::new(Id::corrupted(), 0, parse_buffer.len()),
+                        body: Body::Binary(Binary::Corrupted),
+                    },
+                )
+            }
+
+            // we have nothing left to read or parse
+            break;
+        }
 
         while let Ok((
             new_parse_buffer,
@@ -145,8 +162,11 @@ pub fn parse_elements_from_file(
             }
 
             if new_parse_buffer.len() >= bytes_to_be_skipped {
+                // If the binary body is already in our buffer, just skip in
+                // the buffer
                 parse_buffer = &new_parse_buffer[bytes_to_be_skipped..];
             } else {
+                // Else, skip the remaining bytes in the buffer and seek in the file.
                 file.seek(std::io::SeekFrom::Current(
                     (bytes_to_be_skipped - new_parse_buffer.len()) as i64,
                 ))?;
@@ -161,6 +181,8 @@ pub fn parse_elements_from_file(
     Ok(elements)
 }
 
+// While pushing corrupt elements, we check whether the last element was also corrupt
+// to merge the corrupt area rather than appending a new element.
 fn push_corrupt_element(elements: &mut Vec<Element>, corrupt_element: Element) {
     match elements.last_mut() {
         Some(last_element) if last_element.header.id == Id::corrupted() => {

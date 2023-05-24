@@ -15,10 +15,7 @@ macro_rules! snapshot_test {
     };
 }
 
-snapshot_test!(
-    test_parse_incomplete_file_should_not_panic,
-    "incomplete.hdr"
-);
+snapshot_test!(test_parse_incomplete_file_should_not_hang, "incomplete.hdr");
 snapshot_test!(test_parse_header_encrypted, "encrypted.hdr");
 
 // File was generated with:
