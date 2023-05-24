@@ -58,20 +58,40 @@ fn parse_short(input: &[u8]) -> IResult<&[u8], ShortParsed> {
     }
 }
 
-fn parse_short_or_corrupt(input: &[u8]) -> IResult<&[u8], ShortParsed> {
-    let parsed_short = parse_short(input);
+fn parse_short_corrupt<'a>(input: &'a [u8], is_corrupt: &mut bool) -> (&'a [u8], ShortParsed) {
+    let (input, corrupt_element) = parse_corrupt(input);
+    if !input.is_empty() {
+        *is_corrupt = false;
+    }
+    (
+        input,
+        ShortParsed {
+            element: corrupt_element,
+            bytes_to_be_skipped: 0,
+        },
+    )
+}
+
+fn parse_short_or_corrupt<'a>(
+    input: &'a [u8],
+    is_corrupt: &mut bool,
+) -> IResult<&'a [u8], ShortParsed> {
+    let parsed_short = if *is_corrupt {
+        if input.is_empty() {
+            Err(Error::NeedData)
+        } else {
+            Ok(parse_short_corrupt(input, is_corrupt))
+        }
+    } else {
+        parse_short(input)
+    };
+
     match parsed_short {
         Ok((input, short_parsed)) => Ok((input, short_parsed)),
         Err(Error::NeedData) => Err(Error::NeedData),
         Err(_) => {
-            let (input, corrupt_element) = parse_corrupt(input);
-            Ok((
-                input,
-                ShortParsed {
-                    element: corrupt_element,
-                    bytes_to_be_skipped: 0,
-                },
-            ))
+            *is_corrupt = true;
+            Ok(parse_short_corrupt(input, is_corrupt))
         }
     }
 }
@@ -90,6 +110,7 @@ pub fn parse_elements_from_file(
     let mut filled = 0;
     let mut elements = Vec::<Element>::new();
     let mut position = show_positions.then_some(0);
+    let mut is_corrupt = false;
 
     loop {
         let num_read = file.read(&mut buffer[filled..])?;
@@ -109,7 +130,7 @@ pub fn parse_elements_from_file(
         let mut parse_buffer = &buffer[..(filled + num_read)];
 
         loop {
-            match parse_short_or_corrupt(parse_buffer) {
+            match parse_short_or_corrupt(parse_buffer, &mut is_corrupt) {
                 Ok((
                     new_parse_buffer,
                     ShortParsed {
