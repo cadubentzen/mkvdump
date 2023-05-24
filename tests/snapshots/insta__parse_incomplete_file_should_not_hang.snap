@@ -1,7 +1,6 @@
 ---
-source: src/main.rs
-assertion_line: 890
-expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
+source: tests/insta.rs
+expression: build_element_trees(&elements)
 ---
 - id: EBML
   header_size: 5
@@ -227,8 +226,8 @@ expression: "parse_buffer_to_end(include_bytes!(\"../inputs/incomplete.hdr\"))"
                   header_size: 3
                   size: 11
                   value: DURATION
-                - id: TagString
-                  header_size: 3
-                  size: 23
-                  value: "00:00:10.000000000"
+                - id: Corrupted
+                  header_size: 0
+                  size: 16
+                  value: ~
 
