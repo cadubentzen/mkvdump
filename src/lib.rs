@@ -128,35 +128,32 @@ pub fn parse_elements_from_file(
 
         let mut parse_buffer = &buffer[..(filled + num_read)];
 
-        loop {
-            match parse_short_or_corrupt(parse_buffer, &mut is_corrupt) {
-                Ok((
-                    new_parse_buffer,
-                    ShortParsed {
-                        mut element,
-                        bytes_to_be_skipped,
-                    },
-                )) => {
-                    insert_position(&mut element, &mut position);
+        while let Ok((
+            new_parse_buffer,
+            ShortParsed {
+                mut element,
+                bytes_to_be_skipped,
+            },
+        )) = parse_short_or_corrupt(parse_buffer, &mut is_corrupt)
+        {
+            insert_position(&mut element, &mut position);
 
-                    if element.header.id == Id::corrupted() {
-                        push_corrupt_element(&mut elements, element);
-                    } else {
-                        elements.push(element);
-                    }
+            if element.header.id == Id::corrupted() {
+                push_corrupt_element(&mut elements, element);
+            } else {
+                elements.push(element);
+            }
 
-                    if new_parse_buffer.len() >= bytes_to_be_skipped {
-                        parse_buffer = &new_parse_buffer[bytes_to_be_skipped..];
-                    } else {
-                        file.seek(std::io::SeekFrom::Current(
-                            (bytes_to_be_skipped - new_parse_buffer.len()) as i64,
-                        ))?;
-                        parse_buffer = &[];
-                    }
-                }
-                Err(_) => break,
+            if new_parse_buffer.len() >= bytes_to_be_skipped {
+                parse_buffer = &new_parse_buffer[bytes_to_be_skipped..];
+            } else {
+                file.seek(std::io::SeekFrom::Current(
+                    (bytes_to_be_skipped - new_parse_buffer.len()) as i64,
+                ))?;
+                parse_buffer = &[];
             }
         }
+
         filled = parse_buffer.len();
         let parse_buffer = Vec::from(parse_buffer);
         buffer[..filled].copy_from_slice(&parse_buffer);
