@@ -1,7 +1,7 @@
 use mkvdump::parse_elements_from_file;
 use mkvparser::{elements::Id, parse_element};
 
-const BUFFER_SIZE: u64 = 64 * 1024 * 1024;
+const BUFFER_SIZE: u64 = 8192;
 
 #[test]
 fn test_show_position() -> anyhow::Result<()> {
