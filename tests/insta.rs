@@ -1,14 +1,11 @@
 use mkvdump::parse_elements_from_file;
 use mkvparser::tree::build_element_trees;
 
-const BUFFER_SIZE: u64 = 8192;
-
 macro_rules! snapshot_test {
     ($test_name:ident, $filename:expr) => {
         #[test]
         fn $test_name() -> anyhow::Result<()> {
-            let elements =
-                parse_elements_from_file(concat!("tests/inputs/", $filename), false, BUFFER_SIZE)?;
+            let elements = parse_elements_from_file(concat!("tests/inputs/", $filename), false)?;
             insta::assert_yaml_snapshot!(build_element_trees(&elements));
             Ok(())
         }

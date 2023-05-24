@@ -11,6 +11,8 @@ use mkvparser::{
     parse_body, parse_corrupt, parse_header, peek_binary, Binary, Body, Element, Error, Header,
 };
 
+const DEFAULT_BUFFER_SIZE: u64 = 8192;
+
 fn insert_position(element: &mut Element, position: &mut Option<usize>) {
     element.header.position = *position;
     *position = position.map(|p| {
@@ -112,12 +114,11 @@ fn parse_short_or_corrupt<'a>(
 pub fn parse_elements_from_file(
     path: impl AsRef<Path>,
     show_positions: bool,
-    buffer_size: u64,
 ) -> anyhow::Result<Vec<Element>> {
     let mut file = File::open(path)?;
     let file_length = file.metadata()?.len();
 
-    let buffer_size = file_length.min(buffer_size).try_into().unwrap();
+    let buffer_size = file_length.min(DEFAULT_BUFFER_SIZE).try_into().unwrap();
     let mut buffer = vec![0; buffer_size];
     let mut filled = 0;
     let mut elements = Vec::<Element>::new();

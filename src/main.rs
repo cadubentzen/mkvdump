@@ -26,10 +26,6 @@ struct Args {
     /// Show output as a sequence, rather than a tree
     #[clap(short = 'l', long)]
     linear_output: bool,
-
-    /// Buffer size in bytes
-    #[clap(short = 'b', long, default_value_t = DEFAULT_BUFFER_SIZE)]
-    buffer_size: u64,
 }
 
 #[doc(hidden)]
@@ -59,11 +55,7 @@ fn print_serialized<T: Serialize>(elements: &[T], format: &Format) -> anyhow::Re
 #[doc(hidden)]
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
-    let elements = parse_elements_from_file(
-        &args.filename,
-        args.show_element_positions,
-        args.buffer_size,
-    )?;
+    let elements = parse_elements_from_file(&args.filename, args.show_element_positions)?;
 
     if args.linear_output {
         print_serialized(&elements, &args.format)?;
