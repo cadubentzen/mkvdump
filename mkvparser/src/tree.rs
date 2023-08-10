@@ -1,5 +1,5 @@
-///! The tree module contains helpers for building tree
-///! structures from parsed elements
+//! The tree module contains helpers for building tree
+//! structures from parsed elements
 use serde::Serialize;
 
 use crate::{Body, Element, Header, Id};
