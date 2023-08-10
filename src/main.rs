@@ -6,8 +6,6 @@ use mkvparser::tree::build_element_trees;
 use serde::Serialize;
 use std::io::Write;
 
-const DEFAULT_BUFFER_SIZE: u64 = 8192;
-
 #[doc(hidden)]
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
