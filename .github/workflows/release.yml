@@ -39,7 +39,7 @@ jobs:
         run: cargo build --release --target ${{ matrix.config.target }}
 
       - name: Upload GitHub release artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mkvdump-${{ github.ref_name }}-${{ matrix.config.target }}
           path: target/${{ matrix.config.target }}/release/mkvdump${{ matrix.config.ext }}
@@ -76,13 +76,13 @@ jobs:
 
       - name: Upload Docker artifacts
         if: ${{ matrix.config.arch != '' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mkvdump-${{ matrix.config.arch }}
           path: target/${{ matrix.config.target }}/release/mkvdump
 
       - name: Upload GitHub release artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mkvdump-${{ github.ref_name }}-${{ matrix.config.target }}
           path: target/${{ matrix.config.target }}/release/mkvdump${{ matrix.config.ext }}
@@ -158,7 +158,7 @@ jobs:
         run: cargo deb -p mkvdump
 
       - name: Upload GitHub release artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: mkvdump-debian
           path: target/debian/mkvdump_*_amd64.deb
